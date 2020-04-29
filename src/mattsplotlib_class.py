@@ -30,6 +30,7 @@ class mattsplotlib():
                             '|': 'line-ns',
                             '_': 'line-ew'}
 
+
     def figure(self, figsize=(10, 7)):
         self.figsize = figsize
         self.fig = go.Figure(data=(), layout={})
@@ -359,6 +360,8 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self.fig.layout.yaxis['showline'] = True
         self.fig.layout.xaxis['showline'] = True
 
+        self.fig.update_layout(legend={'itemsizing': 'constant'})
+
 
     def _format_axes(self):
         font = self._get_font(color=None, size=None, family=None)
@@ -402,7 +405,6 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
     def set_xticks(self,
                xtick_locs,
-               xticklabels,
                rotation=0,
                color=None,
                size=None,
@@ -412,7 +414,6 @@ edgecolors : color or sequence of color, optional, default: 'face'
         """Update x-axis ticks and labels"""
         font = self._get_font(color=color, size=size, family=family)
         self.fig.update_xaxes(tickvals=list(xtick_locs),
-                              ticktext=list(xticklabels),
                               tickangle=-rotation,
                               tickfont=font)
 
@@ -443,7 +444,6 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
     def set_yticks(self,
                ytick_locs,
-               yticklabels,
                rotation=0,
                color=None,
                size=None,
@@ -453,7 +453,6 @@ edgecolors : color or sequence of color, optional, default: 'face'
         "Update y-axis ticks and labels"
         font = self._get_font(color=color, size=size, family=family)
         self.fig.update_xaxes(tickvals=list(ytick_locs),
-                              ticktext=list(yticklabels),
                               tickangle=-rotation,
                               tickfont=font)
 
@@ -508,8 +507,18 @@ edgecolors : color or sequence of color, optional, default: 'face'
     def legend(self,
                handles,
                title=None,
+               loc=None,
+               fontsize=None,
+               frameon=None,
+               edgecolor=None,
+               facecolor=None,
+               framealpha=None,
                **kwargs):
+
+        default_font = self._get_font()
+        self.fig.layout.font = default_font
         self.fig.update_layout(showlegend=True)
+
         for i, handle in enumerate(handles):
             if i < len(self.fig.data):
                 if handle == '_nolabel_':
@@ -519,6 +528,87 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
         if title is not None:
             self.fig.update_layout(legend_title_text=title)
+
+        if (loc is None) | (loc == 'best') | (loc == 0):
+            None
+        elif (loc == 'upper right') | (loc == 1):
+            self.fig.layout.legend['xanchor'] = 'right'
+            self.fig.layout.legend['yanchor'] = 'top'
+            self.fig.layout.legend['x']=0.95
+            self.fig.layout.legend['y']=0.95
+        elif (loc == 'upper left') | (loc == 2):
+            self.fig.layout.legend['xanchor'] = 'left'
+            self.fig.layout.legend['yanchor'] = 'top'
+            self.fig.layout.legend['x'] = 0.05
+            self.fig.layout.legend['y'] = 0.95
+        elif (loc == 'lower left') | (loc == 3):
+            self.fig.layout.legend['xanchor'] = 'left'
+            self.fig.layout.legend['yanchor'] = 'bottom'
+            self.fig.layout.legend['x'] = 0.05
+            self.fig.layout.legend['y'] = 0.05
+        elif (loc == 'lower right') | (loc == 4):
+            self.fig.layout.legend['xanchor'] = 'right'
+            self.fig.layout.legend['yanchor'] = 'bottom'
+            self.fig.layout.legend['x'] = 0.95
+            self.fig.layout.legend['y'] = 0.05
+        elif (loc == 'right') | (loc == 5):
+            self.fig.layout.legend['xanchor'] = 'right'
+            self.fig.layout.legend['yanchor'] = 'middle'
+            self.fig.layout.legend['x'] = 0.95
+            self.fig.layout.legend['y'] = 0.5
+        elif (loc == 'center left') | (loc == 6):
+            self.fig.layout.legend['xanchor'] = 'left'
+            self.fig.layout.legend['yanchor'] = 'middle'
+            self.fig.layout.legend['x'] = 0.05
+            self.fig.layout.legend['y'] = 0.5
+        elif (loc == 'center right') | (loc == 7):
+            self.fig.layout.legend['xanchor'] = 'right'
+            self.fig.layout.legend['yanchor'] = 'middle'
+            self.fig.layout.legend['x'] = 0.95
+            self.fig.layout.legend['y'] = 0.5
+        elif (loc == 'lower center') | (loc == 8):
+            self.fig.layout.legend['xanchor'] = 'center'
+            self.fig.layout.legend['yanchor'] = 'bottom'
+            self.fig.layout.legend['x'] = 0.5
+            self.fig.layout.legend['y'] = 0.05
+        elif (loc == 'upper center') | (loc == 9):
+            self.fig.layout.legend['xanchor'] = 'center'
+            self.fig.layout.legend['yanchor'] = 'top'
+            self.fig.layout.legend['x'] = 0.5
+            self.fig.layout.legend['y'] = 0.95
+        elif (loc == 'center') | (loc == 10):
+            self.fig.layout.legend['xanchor'] = 'center'
+            self.fig.layout.legend['yanchor'] = 'middle'
+            self.fig.layout.legend['x'] = 0.5
+            self.fig.layout.legend['y'] = 0.5
+
+        if fontsize is not None:
+            if type(fontsize) == int:
+                self.fig.layout.font['size'] = fontsize
+            elif type(fontsize) == 'xx-small':
+                self.fig.layout.font['size'] = max(default_font['size'] - 6, 2)
+            elif type(fontsize) == 'x-small':
+                self.fig.layout.font['size'] = max(default_font['size'] - 4, 2)
+            elif type(fontsize) == 'small':
+                self.fig.layout.font['size'] = max(default_font['size'] - 2, 2)
+            elif type(fontsize) == 'large':
+                self.fig.layout.font['size'] = default_font['size'] + 2
+            elif type(fontsize) == 'x-large':
+                self.fig.layout.font['size'] = default_font['size'] + 4
+            elif type(fontsize) == 'xx-large':
+                self.fig.layout.font['size'] = default_font['size'] + 6
+
+        if frameon is not None:
+            if not frameon:
+                self.fig.layout.legend['borderwidth'] = 0
+            else:
+                self.fig.layout.legend['borderwidth'] = 2
+                self.fig.layout.legend['bordercolor'] = 'grey'
+        if edgecolor is not None:
+            self.fig.layout.legend['bordercolor'] = edgecolor
+        if facecolor is not None:
+            self.fig.layout.legend['bgcolor'] = facecolor
+
 
 
 class figure_handle(object):

@@ -108,6 +108,7 @@ def show():
 
 def subplots():
     ax = mattsplotlib()
+    ax.figure()
     f = figure_handle(ax)
     return f, ax
 
