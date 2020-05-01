@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6aa4e0da-2a85-42ac-8af7-cb7ae8b604a2" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/basic_matplotlib.png" beforeDir="false" afterPath="$PROJECT_DIR$/basic_matplotlib.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/Untitled.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/Untitled.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mattsplotlib.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mattsplotlib_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib_class.py" afterDir="false" />
@@ -16,11 +14,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="669">
-              <caret line="127" column="29" selection-start-line="127" selection-start-column="29" selection-end-line="127" selection-end-column="29" />
+            <state relative-caret-position="734">
+              <caret line="101" column="32" selection-start-line="101" selection-start-column="32" selection-end-line="101" selection-end-column="32" />
               <folding>
                 <element signature="e#0#33#0" expanded="true" />
               </folding>
@@ -28,11 +26,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-20649">
-              <caret line="161" column="43" selection-start-line="161" selection-start-column="43" selection-end-line="161" selection-end-column="43" />
+            <state relative-caret-position="555">
+              <caret line="832" column="31" selection-start-line="832" selection-start-column="31" selection-end-line="832" selection-end-column="31" />
               <folding>
                 <element signature="e#0#33#0" expanded="true" />
               </folding>
@@ -62,6 +60,10 @@
       <find>plot</find>
       <find>color_rgba =</find>
       <find>def _nx</find>
+      <find>font</find>
+      <find>font =</find>
+      <find>self._get_font</find>
+      <find>format</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -157,20 +159,20 @@
     </layout>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
+    <entry file="file://$PROJECT_DIR$/src/mattsplotlib.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-20649">
-          <caret line="161" column="43" selection-start-line="161" selection-start-column="43" selection-end-line="161" selection-end-column="43" />
+        <state relative-caret-position="734">
+          <caret line="101" column="32" selection-start-line="101" selection-start-column="32" selection-end-line="101" selection-end-column="32" />
           <folding>
             <element signature="e#0#33#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mattsplotlib.py">
+    <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="669">
-          <caret line="127" column="29" selection-start-line="127" selection-start-column="29" selection-end-line="127" selection-end-column="29" />
+        <state relative-caret-position="555">
+          <caret line="832" column="31" selection-start-line="832" selection-start-column="31" selection-end-line="832" selection-end-column="31" />
           <folding>
             <element signature="e#0#33#0" expanded="true" />
           </folding>

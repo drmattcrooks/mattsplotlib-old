@@ -810,8 +810,45 @@ edgecolors : color or sequence of color, optional, default: 'face'
             self._plot(*args,
                        **kwargs)
 
-    def _format_axes(self):
-        font = self._get_font(color=None, size=None, family=None)
+    def text(self, *args, **kwargs):
+        self._text(*args, **kwargs)
+
+    def _text(self, *args, **kwargs):
+        if len(args) == 0:
+            raise TypeError("text() missing 3 required positional arguments: 'x', 'y', and 's'")
+        elif len(args) == 1:
+            raise TypeError("text() missing 2 required positional arguments: 'y', and 's'")
+        elif len(args) == 2:
+            raise TypeError("text() missing 1 required positional arguments: 's'")
+        else:
+            x = args[0]
+            y = args[1]
+            s = args[2]
+
+        horizontalalignment = kwargs.get('horizontalalignment', 'left')
+        vertalalignment = kwargs.get('verticalalignment', 'bottom')
+
+        if 'fontweight' in kwargs:
+            if kwargs['fontweight'] == 'bold':
+
+                s = f"<b>{s}</b>"
+
+        font = self._extract_font_properties(**kwargs)
+
+        self.fig.add_annotation(
+            x=x,
+            y=y,
+            xref='x',
+            yref='y',
+            text=s,
+            showarrow=False,
+            xanchor=horizontalalignment,
+            yanchor=vertalalignment,
+            font=font
+        )
+
+    def _format_axes(self, **kwargs):
+        font = self._extract_font_properties(**kwargs)
         self.fig.update_xaxes(tickfont=font)
         self.fig.update_yaxes(tickfont=font)
         self.fig.update_xaxes(titlefont=font)
@@ -823,42 +860,21 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self.fig.layout.xaxis['showgrid'] = False
         self.fig.layout.xaxis['zeroline'] = False
 
-    def _get_font(self,
-                  color=None,
-                  size=None,
-                  family=None):
-        font = {'color': 'grey',
-                'size': 16,
-                'family': 'serif'}
-        if color is not None:
-            font['color'] = color
-        if size is not None:
-            font['size'] = size
-        if family is not None:
-            font['family'] = family
-        return font
+
 
     def set_xlabel(self,
                text,
-               color=None,
-               size=None,
-               family=None,
                **kwargs):
         """Update x-axis title"""
-        font = self._get_font(color=color, size=size, family=family)
+        font = self._extract_font_properties(**kwargs)
         self.fig.update_layout(xaxis_title=text)
         self.fig.layout.xaxis.title['font'] = font
 
     def set_xticks(self,
-               xtick_locs,
-               rotation=0,
-               color=None,
-               size=None,
-               family=None,
                **kwargs):
 
         """Update x-axis ticks and labels"""
-        font = self._get_font(color=color, size=size, family=family)
+        font = self._extract_font_properties(**kwargs)
         self.fig.update_xaxes(tickvals=list(xtick_locs),
                               tickangle=-rotation,
                               tickfont=font)
@@ -866,12 +882,9 @@ edgecolors : color or sequence of color, optional, default: 'face'
     def set_xticklabels(self,
                         xticklabels,
                         rotation=0,
-                        color=None,
-                        size=None,
-                        family=None,
                         **kwargs):
 
-        font = self._get_font(color=color, size=size, family=family)
+        font = self._extract_font_properties(**kwargs)
         self.fig.update_xaxes(ticktext=list(xticklabels),
                               tickangle=-rotation,
                               tickfont=font)
@@ -879,25 +892,19 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
     def set_ylabel(self,
                text,
-               color=None,
-               size=None,
-               family=None,
                **kwargs):
         """Update y-axis title"""
-        font = self._get_font(color=color, size=size, family=family)
+        font = self._extract_font_properties(**kwargs)
         self.fig.update_layout(yaxis_title=text)
         self.fig.layout.yaxis.title['font'] = font
 
     def set_yticks(self,
                ytick_locs,
                rotation=0,
-               color=None,
-               size=None,
-               family=None,
                **kwargs):
 
         "Update y-axis ticks and labels"
-        font = self._get_font(color=color, size=size, family=family)
+        font = self._extract_font_properties(**kwargs)
         self.fig.update_xaxes(tickvals=list(ytick_locs),
                               tickangle=-rotation,
                               tickfont=font)
@@ -905,12 +912,9 @@ edgecolors : color or sequence of color, optional, default: 'face'
     def set_yticklabels(self,
                         yticklabels,
                         rotation=0,
-                        color=None,
-                        size=None,
-                        family=None,
                         **kwargs):
 
-        font = self._get_font(color=color, size=size, family=family)
+        font = self._extract_font_properties(**kwargs)
         self.fig.update_yaxes(ticktext=list(yticklabels),
                               tickangle=-rotation,
                               tickfont=font)
@@ -933,12 +937,9 @@ edgecolors : color or sequence of color, optional, default: 'face'
     def set_title(self,
               title_text,
               y=0.9,
-              color=None,
-              size=None,
-              family=None,
               **kwargs):
         "Set a title on the plot"
-        font = self._get_font(color=color, size=size, family=family)
+        font = self._extract_font_properties(**kwargs)
         if y > 1:
             y = 0.9
         self.fig.update_layout(title={
@@ -958,8 +959,8 @@ edgecolors : color or sequence of color, optional, default: 'face'
         if len(args) > 0:
             labels = args[0]
 
-        default_font = self._get_font()
-        self.fig.layout.font = default_font
+        font = self._extract_font_properties(**kwargs)
+        self.fig.layout.font = font
         self.fig.update_layout(showlegend=True)
 
         i = 0
@@ -1071,6 +1072,55 @@ edgecolors : color or sequence of color, optional, default: 'face'
             self.fig.layout.legend['bordercolor'] = edgecolor
         if facecolor is not None:
             self.fig.layout.legend['bgcolor'] = facecolor
+
+    def _extract_font_properties(self, **kwargs):
+        self.default_fontsize = 16
+
+        font = {}
+        font['color'] = kwargs.get('color', 'grey')
+        font['size'] = kwargs.get('fontsize', self.default_fontsize)
+        if 'size' in kwargs:
+            font['size'] = kwargs['size']
+            if 'fontsize' in kwargs:
+                warnings.warn("Both 'size' and 'fontsize' given, defaulting to 'size'.")
+
+        font['family'] = kwargs.get('family', 'serif')
+
+        font['size'] = self._convert_relative_text_size(font)
+
+        return font
+
+    def _convert_relative_text_size(self, font):
+        default_size = self.default_fontsize
+        print(f"size: {font['size']}")
+        try:
+            font['size'] = float(font['size'])
+        except:
+            if font['size'] == 'xx-small':
+                font['size'] = max(default_size - 6, 2)
+            elif font['size'] == 'x-small':
+                font['size'] = max(default_size - 4, 2)
+            elif font['size'] == 'small':
+                font['size'] = max(default_size - 2, 2)
+            elif font['size'] == 'large':
+                font['size'] = default_size + 2
+            elif font['size'] == 'x-large':
+                font['size'] = default_size + 4
+            elif font['size'] == 'xx-large':
+                font['size'] = default_size + 6
+            else:
+                raise ValueError(f"""font size {font['size']} not recognised: must be an int, float, or one of the following:
+                'xx-small'
+                'x-small'
+                'small'
+                'medium'
+                'large'
+                'x-large'
+                'xx-large'
+                """)
+
+        return font['size']
+
 
     def _get_rgb_color_list(self, rgb_str):
         return [float(c) for c in rgb_str.split('(')[1].split(')')[0].split(', ')]

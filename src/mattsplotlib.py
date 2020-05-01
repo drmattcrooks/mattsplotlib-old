@@ -93,6 +93,15 @@ def nxdraw(*args, **kwargs):
 
     _figure.nxdraw(*args, **kwargs)
 
+def text(*args, **kwargs):
+    global _figure, _new_fig
+    if _new_fig:
+        figure()
+        _new_fig = False
+
+    _figure.text(*args, **kwargs)
+
+
 def xlim(xlower, xupper):
     global _figure, _new_fig
     _figure.set_xlim(xlower, xupper)
