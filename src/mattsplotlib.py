@@ -75,6 +75,23 @@ def scatter(x,
                     hovertext=hovertext,
                     **kwargs)
 
+def plot(*args, **kwargs):
+    global _figure, _new_fig
+
+    if _new_fig:
+        figure()
+        _new_fig = False
+
+    _figure.plot(*args, **kwargs)
+
+def nxdraw(*args, **kwargs):
+    global _figure, _new_fig
+
+    if _new_fig:
+        figure()
+        _new_fig = False
+
+    _figure.nxdraw(*args, **kwargs)
 
 def xlim(xlower, xupper):
     global _figure, _new_fig
@@ -106,12 +123,12 @@ def show():
     _figure.show()
     _new_fig = True
 
-def subplots():
+def subplots(*args, **kwargs):
     ax = mattsplotlib()
-    ax.figure()
+    ax.figure(*args, **kwargs)
     f = figure_handle(ax)
     return f, ax
 
-def legend(labels, **kwargs):
+def legend(*args, **kwargs):
     global _figure, _new_fig
-    _figure.legend(labels, color=None, size=None, family=None, **kwargs)
+    _figure.legend(*args, **kwargs)

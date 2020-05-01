@@ -1,6 +1,8 @@
 import plotly.graph_objects as go
 from plotly.validators.scatter.marker import SymbolValidator
+import numpy as np
 import warnings
+import matplotlib
 
 class mattsplotlib():
     def __init__(self):
@@ -30,12 +32,240 @@ class mattsplotlib():
                             '|': 'line-ns',
                             '_': 'line-ew'}
 
+        self.color_iterable = ['steelblue', 'sandybrown', 'forestgreen', 'firebrick']
+
 
     def figure(self, figsize=(10, 7)):
         self.figsize = figsize
         self.fig = go.Figure(data=(), layout={})
 
-    def bar(self, x, y,
+    def nxdraw(self, *args, **kwargs):
+        self._nxdraw(*args, **kwargs)
+
+    def _nxdraw(self, *args, **kwargs):
+        if len(args) < 2:
+            raise ValueError(f"2 required positional arguments: G and pos required. Only {len(args)} provided")
+
+        G = args[0]
+        pos = args[1]
+
+        xcoords = []
+        ycoords = []
+        xmin = 0
+        xmax = 0
+        ymin = 0
+        ymax = 0
+
+        is_3d = (pos[list(pos.keys())[0]].shape[0] == 3)
+        if is_3d:
+            zcoords = []
+            zmin = 0
+            zmax = 0
+
+        for edge in G.edges:
+            xcoords.append(pos[edge[0]][0])
+            ycoords.append(pos[edge[0]][1])
+            xcoords.append(pos[edge[1]][0])
+            ycoords.append(pos[edge[1]][1])
+            xcoords.append(None)
+            ycoords.append(None)
+
+            if pos[edge[0]][0] < xmin:
+                xmin = pos[edge[0]][0]
+            if pos[edge[1]][0] > xmax:
+                xmax = pos[edge[1]][0]
+            if pos[edge[0]][1] < ymin:
+                ymin = pos[edge[0]][1]
+            if pos[edge[1]][1] > ymax:
+                ymax = pos[edge[1]][1]
+
+            if is_3d:
+                zcoords.append(pos[edge[0]][2])
+                zcoords.append(pos[edge[1]][2])
+                zcoords.append(None)
+                if pos[edge[0]][2] < ymin:
+                    zmin = pos[edge[0]][2]
+                if pos[edge[1]][2] > ymax:
+                    zmax = pos[edge[1]][2]
+
+
+        node_id_dict = {node_name: i for i, node_name in enumerate(G.nodes())}
+
+        xnodes = []
+        ynodes = []
+
+        if is_3d:
+            znodes = []
+
+        for node in G.nodes():
+            xnodes.append(pos[node][0])
+            ynodes.append(pos[node][1])
+            if is_3d:
+                znodes.append(pos[node][2])
+
+        line_color = kwargs.get('edge_color', 'silver')
+        linewidth = kwargs.get('edge_width', 1.5)
+        node_colours = kwargs.get('node_color', ['steelblue'] * len(G.nodes))
+        node_size = kwargs.get('node_size', 10 * is_3d + (15 * (1 - is_3d)))
+        edge_alpha = kwargs.get('edge_alpha', 0.5 * is_3d + 1 * (1 - is_3d))
+
+        if is_3d:
+            line_color_rgba = self._convert_color_to_rgba_str(line_color, edge_alpha)
+        else:
+            line_color_rgba = self._convert_color_to_rgba_str(line_color, edge_alpha)
+
+        if is_3d:
+            go_scatter = go.Scatter3d
+        else:
+            go_scatter = go.Scatter
+
+        edge_trace = go_scatter(
+            x=xcoords,
+            y=ycoords,
+            mode='lines',
+            line_color = line_color_rgba,
+            line_width = linewidth,
+            hoverinfo='text',
+            hovertext=None,
+            showlegend=False)
+        if is_3d:
+            edge_trace['z'] = zcoords
+
+
+        cmap = 'Blues'
+        if 'cmap' in kwargs:
+            cmap = kwargs['cmap']
+
+            if type(cmap) == matplotlib.colors.ListedColormap:
+                color_map = cmap.colors
+                color_map = [f"rgb{tuple([ci * 256 for ci in c])}" for c in color_map]
+                if type(node_colours[0]) == int:
+                    node_colours = [color_map[nc] for nc in node_colours]
+
+        self.fig.add_trace(edge_trace)
+
+        if not is_3d:
+            node_trace = go_scatter(
+                x=xnodes,
+                y=ynodes,
+                mode='markers',
+                hovertext=list(G.nodes()),
+                hoverinfo='text',
+                marker=dict(
+                    color=node_colours,
+                    size=node_size,
+                    opacity=1),
+                showlegend=False)
+            self.fig.add_trace(node_trace)
+
+        else:
+            for color in set(node_colours):
+                node_names = []
+                xnodes_coloured = []
+                ynodes_coloured = []
+                znodes_coloured = []
+                for i, node in enumerate(G.nodes):
+                    if node_colours[i] == color:
+                        node_names.append(node)
+                        xnodes_coloured.append(xnodes[i])
+                        ynodes_coloured.append(ynodes[i])
+                        znodes_coloured.append(znodes[i])
+
+                node_trace = go_scatter(
+                    x=xnodes_coloured,
+                    y=ynodes_coloured,
+                    z=znodes_coloured,
+                    mode='markers',
+                    hovertext=node_names,
+                    hoverinfo='text',
+                    marker=dict(
+                        color=color,
+                        size=node_size,
+                        opacity=1),
+                    showlegend=False)
+
+                self.fig.add_trace(node_trace)
+
+
+        self.fig.update_layout(plot_bgcolor = 'rgba(0,0,0,0)',
+                               paper_bgcolor = 'rgba(0,0,0,0)',
+                               width = self.figsize[0] * 500 / 7,
+                               height = self.figsize[1] * 500 / 7,
+                               clickmode = 'event+select',
+                               margin = {'l': 20,
+                                         'r': 20,
+                                         'b': 20,
+                                         't': 50})
+
+        xrange = [xmin - 0.2, xmax + 0.2]
+        yrange = [ymin - 0.2, ymax + 0.2]
+
+        self.fig.update_xaxes(showgrid=False,
+                              showline=False,
+                              zeroline=False,
+                              showticklabels=False,
+                              range=xrange)
+        self.fig.update_yaxes(showgrid=False,
+                              showline=False,
+                              zeroline=False,
+                              showticklabels=False,
+                              range=yrange)
+
+
+
+        if is_3d:
+            zrange = [zmin - 0.2, zmax + 0.2]
+            self.fig.update_layout(scene=dict(
+                xaxis=dict(
+                    showbackground=False,
+                    showgrid=False,
+                    showline=False,
+                    showspikes=False,
+                    showticklabels=False,
+                    showaxeslabels=False,
+                    visible=False),
+                yaxis=dict(
+                    showbackground=False,
+                    showgrid=False,
+                    showline=False,
+                    showspikes=False,
+                    showticklabels=False,
+                    showaxeslabels=False,
+                    visible=False),
+                zaxis=dict(
+                    showbackground=False,
+                    showgrid=False,
+                    showline=False,
+                    showspikes=False,
+                    showticklabels=False,
+                    showaxeslabels=False,
+                    visible=False)))
+
+
+    def bar(self,
+            x,
+            y,
+            color='steelblue',
+            alpha=1,
+            edgecolor=None,
+            linewidth=0,
+            tick_label=None,
+            log=False,
+            hoverinfo='text',
+            hovertext=None,
+            **kwargs):
+        self._bar(x, y,
+                  color=color,
+                  alpha=alpha,
+                  edgecolor=edgecolor,
+                  linewidth=linewidth,
+                  tick_label=tick_label,
+                  log=log,
+                  hoverinfo=hoverinfo,
+                  hovertext=hovertext,
+                  **kwargs)
+
+    def _bar(self, x, y,
             color='steelblue',
             alpha=1,
             edgecolor=None,
@@ -176,9 +406,40 @@ bar_mode : stacked
         self._format_axes()
         self.fig.layout.xaxis['showline'] = True
 
-
-
     def scatter(self,
+                x,
+                y,
+                s=None,
+                c='steelblue',
+                marker=None,
+                cmap=None,
+                norm=None,
+                vmin=None,
+                vmax=None,
+                alpha=None,
+                linewidths=None,
+                edgecolors=None,
+                hoverinfo='text',
+                hovertext=None,
+                **kwargs):
+
+        self._scatter(x,
+                      y,
+                      s=s,
+                      c=c,
+                      marker=marker,
+                      cmap=cmap,
+                      norm=norm,
+                      vmin=vmin,
+                      vmax=vmax,
+                      alpha=alpha,
+                      linewidths=linewidths,
+                      edgecolors=edgecolors,
+                      hoverinfo=hoverinfo,
+                      hovertext=hovertext,
+                      **kwargs)
+
+    def _scatter(self,
                 x,
                 y,
                 s=None,
@@ -193,6 +454,7 @@ bar_mode : stacked
                 edgecolors=None,
                 hoverinfo='text',
                 hovertext=None,
+                line=None,
                 **kwargs):
         """
 A scatter plot of *y* vs *x* with varying marker size and/or color.
@@ -280,17 +542,22 @@ edgecolors : color or sequence of color, optional, default: 'face'
         else:
             marker = self.marker_dict['o']
 
-        if s is None:
-            s = 10
-        if c is None:
-            c = 'steelblue',
-        if cmap is None:
-            cmap = 'Blues'
-        if alpha is None:
-            if max(s) <= 10:
-                alpha = 1
-            else:
-                alpha = 0.5
+        if marker == 'markers':
+            if s is None:
+                s = 10
+            if c is None:
+                c = 'steelblue',
+            if cmap is None:
+                cmap = 'Blues'
+            if alpha is None:
+                if s is not None:
+                    if max(s) <= 10:
+                        alpha = 1
+                    else:
+                        alpha = 0.5
+                else:
+                    alpha = 1
+
         if linewidths is None:
             if max(s) <= 10:
                 linewidths = 0
@@ -327,6 +594,9 @@ edgecolors : color or sequence of color, optional, default: 'face'
                     'hovertext': hovertext,
                     'marker_symbol': marker}
 
+        if 'line' in kwargs:
+            scatter_data['line'] = kwargs['line']
+
         if 'name' in kwargs:
             scatter_data['name'] = kwargs['name']
             self.fig.update_layout(showlegend=True)
@@ -362,6 +632,183 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
         self.fig.update_layout(legend={'itemsizing': 'constant'})
 
+    def _plot(self,
+              *args,
+              **kwargs):
+            """
+    A scatter plot of *y* vs *x* with varying marker size and/or color.
+
+    Parameters
+    ----------
+    x, y : array_like, shape (n, )
+        The data positions.
+
+    marker : `~matplotlib.markers.MarkerStyle`, optional
+        The marker style. *marker* can be either an instance of the class
+        or the text shorthand for a particular marker.
+        Defaults to ``None``, in which case it takes the value of
+        :rc:`scatter.marker` = 'o'.
+        See `~matplotlib.markers` for more information about marker styles.
+
+    cmap : `~matplotlib.colors.Colormap`, optional, default: None
+        A `.Colormap` instance or registered colormap name. *cmap* is only
+        used if *c* is an array of floats. If ``None``, defaults to rc
+        ``image.cmap``.
+
+    norm : `~matplotlib.colors.Normalize`, optional, default: None
+        A `.Normalize` instance is used to scale luminance data to 0, 1.
+        *norm* is only used if *c* is an array of floats. If *None*, use
+        the default `.colors.Normalize`.
+
+    vmin, vmax : scalar, optional, default: None
+        *vmin* and *vmax* are used in conjunction with *norm* to normalize
+        luminance data. If None, the respective min and max of the color
+        array is used. *vmin* and *vmax* are ignored if you pass a *norm*
+        instance.
+
+    alpha : scalar, optional, default: None
+        The alpha blending value, between 0 (transparent) and 1 (opaque).
+
+    linewidths : scalar or array_like, optional, default: None
+        The linewidth of the marker edges. Note: The default *edgecolors*
+        is 'face'. You may want to change this as well.
+        If *None*, defaults to rcParams ``lines.linewidth``.
+
+    edgecolors : color or sequence of color, optional, default: 'face'
+        The edge color of the marker. Possible values:
+
+        - 'face': The edge color will always be the same as the face color.
+        - 'none': No patch boundary will be drawn.
+        - A matplotib color.
+
+        For non-filled markers, the *edgecolors* kwarg is ignored and
+        forced to 'face' internally."""
+
+            x = args[0]
+            y = args[1]
+            if len(args) > 2:
+                linestyle = args[2]
+            else:
+                linestyle = '-'
+
+            if 'hoverinfo' in kwargs:
+                hoverinfo = kwargs['hoverinfo']
+            else:
+                hoverinfo = 'text'
+            hovertext = kwargs.get('hovertext')
+
+
+            if 'color' in kwargs:
+                color = kwargs['color']
+            else:
+                color = 'steelblue'
+            if 'linewidth' in kwargs:
+                linewidth = kwargs['linewidth']
+            else:
+                linewidth = 3
+
+            color_rgba = self._convert_color_to_rgba_str(color, kwargs.get('alpha'))
+
+            mode = 'lines'
+            if linestyle == '-':
+                dash = None
+            elif linestyle == '.':
+                dash = 'dot'
+            elif linestyle == '--':
+                dash = 'dash'
+            elif linestyle == '-.':
+                dash = 'dashdot'
+            elif linestyle == '.-':
+                dash = None
+                mode = 'markers+lines'
+
+            plot_data = {'x': x,
+                         'y': y,
+                         'mode': mode,
+                         'hoverinfo': hoverinfo,
+                         'hovertext': hovertext,
+                         'line': {'color': color_rgba,
+                                  'width': linewidth,
+                                  'dash': dash}
+                         }
+
+            if 'name' in kwargs:
+                plot_data['name'] = kwargs['name']
+                self.fig.update_layout(showlegend=True)
+            else:
+                if not self.fig.layout.showlegend:
+                    self.fig.update_layout(showlegend=False)
+
+            layout = {'plot_bgcolor': 'rgba(0,0,0,0)',
+                      'paper_bgcolor': 'rgba(0,0,0,0)',
+                      'width': self.figsize[0] * 500 / 7,
+                      'height': self.figsize[1] * 500 / 7,
+                      'font': {'color': 'silver'},
+                      'xaxis': {'title': 'x',
+                                'color': 'grey'},
+                      'yaxis': {'title': 'y',
+                                'color': 'grey'},
+                      'margin': {'l': 20,
+                                 'r': 20,
+                                 'b': 20,
+                                 't': 50}}
+
+            if 'fig' not in dir(self):
+                self.figure()
+
+            data = go.Scatter(plot_data)
+            self.fig.add_trace(data)
+            self.fig.update_layout(layout)
+
+            self._format_axes()
+            self.fig.layout.yaxis['showgrid'] = False
+            self.fig.layout.yaxis['showline'] = True
+            self.fig.layout.xaxis['showline'] = True
+
+            self.fig.update_layout(legend={'itemsizing': 'constant'})
+
+    def plot(self,
+             *args,
+             **kwargs):
+
+        if (len(args) < 2):
+            if ('x' not in kwargs) & ('y' not in kwargs):
+                raise ValueError(f"2 positional arguments required for plot: x and y. Only {len(args)} given.")
+            else:
+                if 'df' not in kwargs:
+                    raise ValueError("No dataframe given")
+
+                df = kwargs['df']
+                if 'color' in kwargs:
+                    if kwargs['color'] not in list(df):
+                        raise ValueError(f"Column {kwargs['color']} not in dataframe")
+                    else:
+                        color_col = kwargs['color']
+                        list_of_colors = list(df[color_col].drop_duplicates())
+                        for iter, cat in enumerate(list_of_colors):
+                            df = kwargs['df']
+                            x = df.loc[df[color_col] == cat, kwargs['x']].values
+                            y = df.loc[df[color_col] == cat, kwargs['y']].values
+                            args = (x, y)
+
+                            kwargs['color'] = self.color_iterable[iter]
+                            kwargs['name'] = cat
+
+                            self._plot(*args,
+                                       **kwargs)
+                else:
+                    df = kwargs['df']
+                    x = df[kwargs['x']].values
+                    y = df[kwargs['y']].values
+                    args = (x, y)
+
+                    self._plot(*args,
+                               **kwargs)
+
+
+        else:
+            self._plot(*args,
+                       **kwargs)
 
     def _format_axes(self):
         font = self._get_font(color=None, size=None, family=None)
@@ -375,7 +822,6 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self.fig.layout.xaxis['gridcolor'] = 'grey'
         self.fig.layout.xaxis['showgrid'] = False
         self.fig.layout.xaxis['zeroline'] = False
-
 
     def _get_font(self,
                   color=None,
@@ -505,84 +951,98 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self.fig.layout.margin['t'] += 50
 
     def legend(self,
-               handles,
-               title=None,
-               loc=None,
-               fontsize=None,
-               frameon=None,
-               edgecolor=None,
-               facecolor=None,
-               framealpha=None,
+               *args,
                **kwargs):
+
+        labels = None
+        if len(args) > 0:
+            labels = args[0]
 
         default_font = self._get_font()
         self.fig.layout.font = default_font
         self.fig.update_layout(showlegend=True)
 
-        for i, handle in enumerate(handles):
-            if i < len(self.fig.data):
-                if handle == '_nolabel_':
-                    self.fig.data[i].showlegend = False
-                else:
-                    self.fig.data[i]['name'] = handle
-
-        if title is not None:
-            self.fig.update_layout(legend_title_text=title)
-
-        if (loc is None) | (loc == 'best') | (loc == 0):
+        i = 0
+        if labels is None:
             None
-        elif (loc == 'upper right') | (loc == 1):
-            self.fig.layout.legend['xanchor'] = 'right'
-            self.fig.layout.legend['yanchor'] = 'top'
-            self.fig.layout.legend['x']=0.95
-            self.fig.layout.legend['y']=0.95
-        elif (loc == 'upper left') | (loc == 2):
-            self.fig.layout.legend['xanchor'] = 'left'
-            self.fig.layout.legend['yanchor'] = 'top'
-            self.fig.layout.legend['x'] = 0.05
-            self.fig.layout.legend['y'] = 0.95
-        elif (loc == 'lower left') | (loc == 3):
-            self.fig.layout.legend['xanchor'] = 'left'
-            self.fig.layout.legend['yanchor'] = 'bottom'
-            self.fig.layout.legend['x'] = 0.05
-            self.fig.layout.legend['y'] = 0.05
-        elif (loc == 'lower right') | (loc == 4):
-            self.fig.layout.legend['xanchor'] = 'right'
-            self.fig.layout.legend['yanchor'] = 'bottom'
-            self.fig.layout.legend['x'] = 0.95
-            self.fig.layout.legend['y'] = 0.05
-        elif (loc == 'right') | (loc == 5):
-            self.fig.layout.legend['xanchor'] = 'right'
-            self.fig.layout.legend['yanchor'] = 'middle'
-            self.fig.layout.legend['x'] = 0.95
-            self.fig.layout.legend['y'] = 0.5
-        elif (loc == 'center left') | (loc == 6):
-            self.fig.layout.legend['xanchor'] = 'left'
-            self.fig.layout.legend['yanchor'] = 'middle'
-            self.fig.layout.legend['x'] = 0.05
-            self.fig.layout.legend['y'] = 0.5
-        elif (loc == 'center right') | (loc == 7):
-            self.fig.layout.legend['xanchor'] = 'right'
-            self.fig.layout.legend['yanchor'] = 'middle'
-            self.fig.layout.legend['x'] = 0.95
-            self.fig.layout.legend['y'] = 0.5
-        elif (loc == 'lower center') | (loc == 8):
-            self.fig.layout.legend['xanchor'] = 'center'
-            self.fig.layout.legend['yanchor'] = 'bottom'
-            self.fig.layout.legend['x'] = 0.5
-            self.fig.layout.legend['y'] = 0.05
-        elif (loc == 'upper center') | (loc == 9):
-            self.fig.layout.legend['xanchor'] = 'center'
-            self.fig.layout.legend['yanchor'] = 'top'
-            self.fig.layout.legend['x'] = 0.5
-            self.fig.layout.legend['y'] = 0.95
-        elif (loc == 'center') | (loc == 10):
-            self.fig.layout.legend['xanchor'] = 'center'
-            self.fig.layout.legend['yanchor'] = 'middle'
-            self.fig.layout.legend['x'] = 0.5
-            self.fig.layout.legend['y'] = 0.5
+        else:
+            for handle in self.fig.data:
+                if i <= len(labels):
+                    if 'showlegend' in handle:
+                        if self.fig.data[i].showlegend == False:
+                            None
+                        else:
+                            self.fig.data[i]['name'] = labels[i]
+                    else:
+                        if labels[i] == '_nolabel_':
+                            self.fig.data[i].showlegend = False
+                        else:
+                            self.fig.data[i]['name'] = labels[i]
+                    i += 1
 
-        if fontsize is not None:
+
+        if 'title' in kwargs:
+            self.fig.update_layout(legend_title_text=kwargs['title'])
+
+        if ('loc' not in kwargs):
+            None
+        else:
+            loc = kwargs['loc']
+            if (loc == 'best') | (loc == 0):
+                None
+            elif (loc == 'upper right') | (loc == 1):
+                self.fig.layout.legend['xanchor'] = 'right'
+                self.fig.layout.legend['yanchor'] = 'top'
+                self.fig.layout.legend['x']=0.95
+                self.fig.layout.legend['y']=0.95
+            elif (loc == 'upper left') | (loc == 2):
+                self.fig.layout.legend['xanchor'] = 'left'
+                self.fig.layout.legend['yanchor'] = 'top'
+                self.fig.layout.legend['x'] = 0.05
+                self.fig.layout.legend['y'] = 0.95
+            elif (loc == 'lower left') | (loc == 3):
+                self.fig.layout.legend['xanchor'] = 'left'
+                self.fig.layout.legend['yanchor'] = 'bottom'
+                self.fig.layout.legend['x'] = 0.05
+                self.fig.layout.legend['y'] = 0.05
+            elif (loc == 'lower right') | (loc == 4):
+                self.fig.layout.legend['xanchor'] = 'right'
+                self.fig.layout.legend['yanchor'] = 'bottom'
+                self.fig.layout.legend['x'] = 0.95
+                self.fig.layout.legend['y'] = 0.05
+            elif (loc == 'right') | (loc == 5):
+                self.fig.layout.legend['xanchor'] = 'right'
+                self.fig.layout.legend['yanchor'] = 'middle'
+                self.fig.layout.legend['x'] = 0.95
+                self.fig.layout.legend['y'] = 0.5
+            elif (loc == 'center left') | (loc == 6):
+                self.fig.layout.legend['xanchor'] = 'left'
+                self.fig.layout.legend['yanchor'] = 'middle'
+                self.fig.layout.legend['x'] = 0.05
+                self.fig.layout.legend['y'] = 0.5
+            elif (loc == 'center right') | (loc == 7):
+                self.fig.layout.legend['xanchor'] = 'right'
+                self.fig.layout.legend['yanchor'] = 'middle'
+                self.fig.layout.legend['x'] = 0.95
+                self.fig.layout.legend['y'] = 0.5
+            elif (loc == 'lower center') | (loc == 8):
+                self.fig.layout.legend['xanchor'] = 'center'
+                self.fig.layout.legend['yanchor'] = 'bottom'
+                self.fig.layout.legend['x'] = 0.5
+                self.fig.layout.legend['y'] = 0.05
+            elif (loc == 'upper center') | (loc == 9):
+                self.fig.layout.legend['xanchor'] = 'center'
+                self.fig.layout.legend['yanchor'] = 'top'
+                self.fig.layout.legend['x'] = 0.5
+                self.fig.layout.legend['y'] = 0.95
+            elif (loc == 'center') | (loc == 10):
+                self.fig.layout.legend['xanchor'] = 'center'
+                self.fig.layout.legend['yanchor'] = 'middle'
+                self.fig.layout.legend['x'] = 0.5
+                self.fig.layout.legend['y'] = 0.5
+
+        if 'fontsize' in kwargs:
+            fontsize = kwargs['fontsize']
             if type(fontsize) == int:
                 self.fig.layout.font['size'] = fontsize
             elif type(fontsize) == 'xx-small':
@@ -598,6 +1058,9 @@ edgecolors : color or sequence of color, optional, default: 'face'
             elif type(fontsize) == 'xx-large':
                 self.fig.layout.font['size'] = default_font['size'] + 6
 
+        frameon = kwargs.get('frameon')
+        edgecolor = kwargs.get('edgecolor')
+        facecolor = kwargs.get('facecolor')
         if frameon is not None:
             if not frameon:
                 self.fig.layout.legend['borderwidth'] = 0
@@ -608,6 +1071,61 @@ edgecolors : color or sequence of color, optional, default: 'face'
             self.fig.layout.legend['bordercolor'] = edgecolor
         if facecolor is not None:
             self.fig.layout.legend['bgcolor'] = facecolor
+
+    def _get_rgb_color_list(self, rgb_str):
+        return [float(c) for c in rgb_str.split('(')[1].split(')')[0].split(', ')]
+
+    def _rgb_to_rgba_tuple(self, rgb_tuple_or_list, alpha):
+        return (rgb_tuple_or_list[0], rgb_tuple_or_list[1], rgb_tuple_or_list[2], alpha)
+
+    def _named_color_to_rgb_tuple(self, named_color_str):
+        return matplotlib.colors.to_rgb(matplotlib.colors.get_named_colors_mapping()[named_color_str])
+
+    def _named_color_to_rgba_tuple(self, named_color_str, alpha):
+        rgb_tuple = self._named_color_to_rgb_tuple(named_color_str)
+        return self._rgb_to_rgba_tuple(rgb_tuple, alpha)
+
+    def _rgb_tuple_to_str(self, rgb_tuple):
+        return f"rgba{rgb_tuple}"
+
+    def _update_alpha_in_rgb_str(self, rgb_str, alpha):
+        rgb_list = self._get_rgb_color_list(rgb_str)
+        rgba_tuple = self._rgb_to_rgba_tuple(rgb_list, alpha)
+        return self._rgb_tuple_to_str(rgba_tuple)
+
+    def _convert_color_to_rgba_str(self, color, alpha):
+        if type(color) == str:
+            if color[:3] != 'rgb':
+                # string defined color
+                if alpha is not None:
+                    #alpha specified
+                    color_rgba_tuple = self._named_color_to_rgba_tuple(color, alpha)
+                    color_rgba = self._rgb_tuple_to_str(color_rgba_tuple)
+                else:
+                    # alpha not specified default to 1
+                    color_rgba_tuple = self._named_color_to_rgba_tuple(color, 1)
+                    color_rgba = self._rgb_tuple_to_str(color_rgba_tuple)
+            elif color[:4] != 'rgba':
+                # given rgb or rgba without alpha given as keyword argument
+                color_rgba = color
+                # given rgb or rgba with alpha given as keyword argument
+                if alpha is not None:
+                    color_rgba = self._update_alpha_in_rgb_str(color, alpha)
+        elif type(color) == tuple:
+            # tuple provided
+            if alpha is not None:
+                # given tuple with alpha given as keyword argument
+                color_rgba = self._rgb_tuple_to_str(self._rgb_to_rgba_tuple(color, alpha))
+            elif len(color) == 4:
+                # rgba tuple given
+                color_rgba = self._rgb_tuple_to_str(color)
+            if len(color) == 3:
+                # rgb tuple given default alpha to 1
+                color_rgba = self._rgb_tuple_to_str(self._rgb_to_rgba_tuple(color, 1))
+        else:
+            raise ValueError('Unsupported color type. Specify named string, rgb, or rgba colours')
+
+        return color_rgba
 
 
 
