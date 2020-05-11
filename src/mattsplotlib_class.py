@@ -3,6 +3,7 @@ from plotly.validators.scatter.marker import SymbolValidator
 import numpy as np
 import warnings
 import matplotlib
+import style
 
 class mattsplotlib():
     def __init__(self):
@@ -34,15 +35,29 @@ class mattsplotlib():
 
         self.color_iterable = ['steelblue', 'sandybrown', 'forestgreen', 'firebrick']
 
+        self.default_color = 'steelblue'
 
-    def figure(self, figsize=(10, 7)):
-        self.figsize = figsize
-        self.fig = go.Figure(data=(), layout={})
+        self.plot_types = []
+
+
+
+
+    def figure(self, **kwargs):
+
+        self.style_use(_stylesheet)
+
+        figsize = kwargs.get('figsize', self.figsize)
+        layout = {'width': figsize[0] * 500 / 7,
+                  'height': figsize[1] * 500 / 7}
+        self.fig = go.Figure(data=(), layout=layout)
 
     def nxdraw(self, *args, **kwargs):
         self._nxdraw(*args, **kwargs)
 
     def _nxdraw(self, *args, **kwargs):
+
+        self.plot_types.append('network')
+
         if len(args) < 2:
             raise ValueError(f"2 required positional arguments: G and pos required. Only {len(args)} provided")
 
@@ -119,15 +134,15 @@ class mattsplotlib():
         else:
             go_scatter = go.Scatter
 
-        edge_trace = go_scatter(
-            x=xcoords,
-            y=ycoords,
-            mode='lines',
-            line_color = line_color_rgba,
-            line_width = linewidth,
-            hoverinfo='text',
-            hovertext=None,
-            showlegend=False)
+        edge_trace = go_scatter(mode='lines',
+                                hoverinfo='text',
+                                hovertext=None,
+                                showlegend=False)
+
+        edge_trace.update(self.lines)
+
+        edge_trace = go_scatter.update(x=xcoords,
+                                       y=ycoords)
         if is_3d:
             edge_trace['z'] = zcoords
 
@@ -327,13 +342,13 @@ error_kw : THIS FEATURE IS NOT AVAILABLE YET
 log : bool, optional, default: False
     If *True*, set the y-axis to be log scale.
 
-bar_width : float, optional
-    The width of the bars. This is automatically converted in
-    to a bargap for plotly by subtracting the bar width from
-    the distance between x[1] and x[0]
+width : float, optional
+    The width of the bars.
 
 bar_mode : stacked
         """
+
+        self.plot_types.append('bar')
 
         if log:
             yaxis_type = 'log'
@@ -348,8 +363,15 @@ bar_mode : stacked
         if 'yerr' in kwargs:
             warnings.warn('yerr specified - this feature is not support yet and the argument will be ignored')
 
+        # perturb x so that multiple bars at the same x location don't get offset
+        eps = 1e-3
+        eps_rand = np.random.uniform(1 - 2 * eps, 1 - eps)
+        # print(eps_rand)
+        x = np.array(x) * eps_rand
         x = list(x)
         y = list(y)
+
+        width = kwargs.get('width', 0.9)
 
         bar_data = {'x': x,
                     'y': y,
@@ -358,15 +380,10 @@ bar_mode : stacked
                                'opacity': alpha,
                                'line': {'color': edgecolor, 'width': linewidth}},
                     'hoverinfo': hoverinfo,
-                    'hovertext': hovertext}
+                    'hovertext': hovertext,
+                    'width': width}
 
-        if 'bar_width' in kwargs:
-            if len(x) > 1:
-                bargap = x[1] - x[0] - kwargs['bar_width']
-            else:
-                bargap = 0.1
-        else:
-            bargap = 0.1
+
 
         if 'name' in kwargs:
             bar_data['name'] = kwargs['name']
@@ -385,7 +402,6 @@ bar_mode : stacked
                   'yaxis': {'title': 'y',
                             'type': yaxis_type,
                             'color': 'grey'},
-                  'bargap': bargap,
                   'margin': {'l': 20,
                              'r': 20,
                              'b': 20,
@@ -531,6 +547,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
     For non-filled markers, the *edgecolors* kwarg is ignored and
     forced to 'face' internally."""
 
+        self.plot_types.append('scatter')
 
         if marker is not None:
             if marker not in self.marker_dict:
@@ -684,12 +701,20 @@ edgecolors : color or sequence of color, optional, default: 'face'
         For non-filled markers, the *edgecolors* kwarg is ignored and
         forced to 'face' internally."""
 
+            self.plot_types.append('plot')
+
             x = args[0]
             y = args[1]
+
+            if type(x) == range:
+                x = list(x)
+            if type(y) == range:
+                y = list(y)
+
             if len(args) > 2:
-                linestyle = args[2]
+                dash = args[2]
             else:
-                linestyle = '-'
+                dash = kwargs.get('linestyle', self.lines['dash'])
 
             if 'hoverinfo' in kwargs:
                 hoverinfo = kwargs['hoverinfo']
@@ -698,42 +723,38 @@ edgecolors : color or sequence of color, optional, default: 'face'
             hovertext = kwargs.get('hovertext')
 
 
-            if 'color' in kwargs:
-                color = kwargs['color']
-            else:
-                color = 'steelblue'
-            if 'linewidth' in kwargs:
-                linewidth = kwargs['linewidth']
-            else:
-                linewidth = 3
+            color = kwargs.get('color', 'steelblue')
+            linewidth = kwargs.get('linewidth', self.lines['width'])
 
             color_rgba = self._convert_color_to_rgba_str(color, kwargs.get('alpha'))
 
             mode = 'lines'
-            if linestyle == '-':
+            if dash == '-':
                 dash = None
-            elif linestyle == '.':
+            elif dash == '.':
                 dash = 'dot'
-            elif linestyle == '--':
+            elif dash == '--':
                 dash = 'dash'
-            elif linestyle == '-.':
+            elif dash == '-.':
                 dash = 'dashdot'
-            elif linestyle == '.-':
+            elif dash == '.-':
                 dash = None
                 mode = 'markers+lines'
 
-            plot_data = {'x': x,
-                         'y': y,
-                         'mode': mode,
-                         'hoverinfo': hoverinfo,
-                         'hovertext': hovertext,
-                         'line': {'color': color_rgba,
-                                  'width': linewidth,
-                                  'dash': dash}
-                         }
+            plot_trace = self._get_plot_defaults()
+            plot_trace.update(x=x,
+                              y=y,
+                              mode=mode,
+                              hoverinfo=hoverinfo,
+                              hovertext=hovertext,
+                              line={'color': color_rgba,
+                                    'width': linewidth,
+                                    'dash': dash})
+            self.fig.update_layout(self.layout)
+
 
             if 'name' in kwargs:
-                plot_data['name'] = kwargs['name']
+                plot_trace['name'] = kwargs['name']
                 self.fig.update_layout(showlegend=True)
             else:
                 if not self.fig.layout.showlegend:
@@ -756,14 +777,13 @@ edgecolors : color or sequence of color, optional, default: 'face'
             if 'fig' not in dir(self):
                 self.figure()
 
-            data = go.Scatter(plot_data)
-            self.fig.add_trace(data)
+            self.fig.add_trace(plot_trace)
             self.fig.update_layout(layout)
 
-            self._format_axes()
-            self.fig.layout.yaxis['showgrid'] = False
-            self.fig.layout.yaxis['showline'] = True
-            self.fig.layout.xaxis['showline'] = True
+            # self._format_axes()
+            # self.fig.layout.yaxis['showgrid'] = True
+            # self.fig.layout.yaxis['showline'] = True
+            # self.fig.layout.xaxis['showline'] = True
 
             self.fig.update_layout(legend={'itemsizing': 'constant'})
 
@@ -779,7 +799,11 @@ edgecolors : color or sequence of color, optional, default: 'face'
                     raise ValueError("No dataframe given")
 
                 df = kwargs['df']
+
+                hovertext_col = kwargs.get('hovertext')
+
                 if 'color' in kwargs:
+
                     if kwargs['color'] not in list(df):
                         raise ValueError(f"Column {kwargs['color']} not in dataframe")
                     else:
@@ -793,6 +817,9 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
                             kwargs['color'] = self.color_iterable[iter]
                             kwargs['name'] = cat
+
+                            if hovertext_col is not None:
+                                kwargs['hovertext'] = list(df.loc[df[color_col] == cat, hovertext_col])
 
                             self._plot(*args,
                                        **kwargs)
@@ -812,6 +839,162 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
     def text(self, *args, **kwargs):
         self._text(*args, **kwargs)
+
+    def fill(self, *args, **kwargs):
+        if len(args) == 0:
+            # self._fill(*args, **kwargs)
+            None
+        else:
+            # if len(args) < 3:
+            #     None
+            # else:
+            while len(args) > 0:
+                fill_arg, args = self._split_fill_args(*args)
+                self._fill(*fill_arg, **kwargs)
+
+
+    def _get_arg_type(self, arg):
+
+        if (type(arg) == list) | (type(arg) == np.ndarray):
+            return 'list'
+        elif (type(arg) == str):
+            return 'str_'
+        else:
+            raise ValueError(f"unknown argument {arg}")
+
+    def _get_fill_type(self, *args):
+
+        fill_type = ''
+        counter = 0
+        for arg in args:
+            fill_type += self._get_arg_type(arg)
+            counter += 1
+            if counter == 3:
+                break
+            if counter == len(args):
+                break
+            fill_type += '+'
+
+        return fill_type
+
+    def _split_fill_args(self, *args):
+
+        # type 1: y coords filled to x axis - single list
+        # type 2: x and y give, default color - list+list
+        # type 3: x, y, and color given - list+list+str
+        # type 4: y coords filled to x axis with color given - list+color
+
+        # list+list+list => list+list: Type 2
+        # list+list+string => list+list+string: Type 3
+        # list+string/+* => list+string: Type 4
+
+        fill_type = self._get_fill_type(*args)
+        if fill_type == 'list+list+list':
+            return (args[0], args[1]), args[2:]
+        elif fill_type == 'list+list+str_':
+            if len(args) == 3:
+                return (args[0], args[1], args[2]), ()
+            else:
+                return (args[0], args[1], args[2]), args[3:]
+        elif len(fill_type) == 4:
+            if fill_type == 'list':
+                return (args[0]), ()
+            if fill_type == 'str_':
+                raise ValueError(f"Cannot perform fill on args {args}")
+        elif len(fill_type) == 9:
+            if fill_type == 'list+str_':
+                return (args[0], args[1]), ()
+            elif fill_type == 'list+list':
+                return (args[0], args[1]), ()
+        elif len(fill_type) == 14:
+            if fill_type[:9] == 'list+str_':
+                return (args[0], args[1]), (args[2:])
+        else:
+            raise ValueError(f"Cannot perform fill on args {args}")
+
+    def _fill(self, *args, **kwargs):
+
+        self.plot_types.append('fill')
+
+        hovertext = kwargs.get('hovertext')
+        if hovertext is not None:
+            hoverinfo = 'text'
+        else:
+            hoverinfo = 'skip'
+
+        showlegend = True#kwargs.get('showlegend', False)
+
+        fill_type = self._get_fill_type(*args)
+        alpha = kwargs.get('alpha', 1)
+
+        if fill_type == 'list+list+str_':
+            x = args[0]
+            y = args[1]
+            fillcolor = args[2]
+            fill_data = {'x': x,
+                         'y': y,
+                         'mode': 'lines',
+                         'fill' : 'toself',
+                         'fillcolor': fillcolor,
+                         'hoverinfo': hoverinfo,
+                         'hovertext': hovertext,
+                         'line_width': 0,
+                         'opacity': alpha}
+            layout = {'showlegend': showlegend}
+            self.fig.add_trace(fill_data)
+            self.fig.update_layout(layout)
+
+        elif fill_type == 'list+list':
+            x = args[0]
+            y = args[1]
+            fillcolor = self.default_color
+
+            self.fig.add_trace(
+                go.Scatter(x=x,
+                           y=y,
+                           mode='lines',
+                           fill='toself',
+                           fillcolor=fillcolor,
+                           line_color=None,
+                           hoverinfo=hoverinfo,
+                           hovertext=hovertext,
+                           line_width=0,
+                           opacity=alpha,
+                           showlegend=showlegend))
+        elif fill_type == 'list+str_':
+            y = args[0]
+            x = list(range(len(y)))
+            fillcolor = args[1]
+
+            self.fig.add_trace(
+                go.Scatter(x=x,
+                           y=y,
+                           mode='lines',
+                           fill='toself',
+                           fillcolor=fillcolor,
+                           line_color=None,
+                           hoverinfo=hoverinfo,
+                           hovertext=hovertext,
+                           line_width=0,
+                           opacity=alpha,
+                           showlegend=showlegend))
+        elif fill_type == 'list':
+            y = args[0]
+            x = list(range(len(y)))
+            fillcolor = self.default_color
+
+            self.fig.add_trace(
+                go.Scatter(x=x,
+                           y=y,
+                           mode='lines',
+                           fill='toself',
+                           fillcolor=fillcolor,
+                           line_color=None,
+                           hoverinfo=hoverinfo,
+                           hovertext=hovertext,
+                           line_width=0,
+                           opacity=alpha,
+                           showlegend=showlegend))
 
     def _text(self, *args, **kwargs):
         if len(args) == 0:
@@ -905,7 +1088,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
         "Update y-axis ticks and labels"
         font = self._extract_font_properties(**kwargs)
-        self.fig.update_xaxes(tickvals=list(ytick_locs),
+        self.fig.update_yaxes(tickvals=list(ytick_locs),
                               tickangle=-rotation,
                               tickfont=font)
 
@@ -951,9 +1134,26 @@ edgecolors : color or sequence of color, optional, default: 'face'
             'font': font})
         self.fig.layout.margin['t'] += 50
 
+    def _order_data(self, data):
+
+        # extract plots and add them first
+        return_data = []
+        for plot_id, plot in enumerate(self.plot_types):
+            if plot == 'plot':
+                return_data.append(data[plot_id])
+
+        for plot_id, plot in enumerate(self.plot_types):
+            if plot != 'plot':
+                return_data.append(data[plot_id])
+
+        return tuple(return_data)
+
+
     def legend(self,
                *args,
                **kwargs):
+
+        # self.fig.data = self._order_data(self.fig.data)
 
         labels = None
         if len(args) > 0:
@@ -972,6 +1172,8 @@ edgecolors : color or sequence of color, optional, default: 'face'
                     if 'showlegend' in handle:
                         if self.fig.data[i].showlegend == False:
                             None
+                        elif labels[i] == '_nolabel_':
+                            self.fig.data[i].showlegend = False
                         else:
                             self.fig.data[i]['name'] = labels[i]
                     else:
@@ -1077,39 +1279,44 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self.default_fontsize = 16
 
         font = {}
-        font['color'] = kwargs.get('color', 'grey')
-        font['size'] = kwargs.get('fontsize', self.default_fontsize)
+        font['color'] = kwargs.get('color', self.text['color'])
+        font['size'] = kwargs.get('fontsize', self.font['size'])
         if 'size' in kwargs:
-            font['size'] = kwargs['size']
+            font['size'] = kwargs.get('size', self.font['size'])
             if 'fontsize' in kwargs:
                 warnings.warn("Both 'size' and 'fontsize' given, defaulting to 'size'.")
 
-        font['family'] = kwargs.get('family', 'serif')
+        font['family'] = kwargs.get('family', self.font['family'])
 
         font['size'] = self._convert_relative_text_size(font)
 
         return font
 
-    def _convert_relative_text_size(self, font):
-        default_size = self.default_fontsize
-        print(f"size: {font['size']}")
+    def _convert_text_using_rcParams(self, string):
+        if self.font.weight:
+            return f"<b>{string}</b>"
+
+    def _convert_relative_text_size(self, size):
+        default_size = self.font['size']
         try:
-            font['size'] = float(font['size'])
+            size = float(size)
         except:
-            if font['size'] == 'xx-small':
-                font['size'] = max(default_size - 6, 2)
-            elif font['size'] == 'x-small':
-                font['size'] = max(default_size - 4, 2)
-            elif font['size'] == 'small':
-                font['size'] = max(default_size - 2, 2)
-            elif font['size'] == 'large':
-                font['size'] = default_size + 2
-            elif font['size'] == 'x-large':
-                font['size'] = default_size + 4
-            elif font['size'] == 'xx-large':
-                font['size'] = default_size + 6
+            if size == 'xx-small':
+                size = max(default_size - 6, 2)
+            elif size == 'x-small':
+                size = max(default_size - 4, 2)
+            elif size == 'small':
+                size = max(default_size - 2, 2)
+            elif size == 'medium':
+                size = default_size
+            elif size == 'large':
+                size = default_size + 2
+            elif size == 'x-large':
+                size = default_size + 4
+            elif size == 'xx-large':
+                size = default_size + 6
             else:
-                raise ValueError(f"""font size {font['size']} not recognised: must be an int, float, or one of the following:
+                raise ValueError(f"""font size {size} not recognised: must be an int, float, or one of the following:
                 'xx-small'
                 'x-small'
                 'small'
@@ -1119,7 +1326,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 'xx-large'
                 """)
 
-        return font['size']
+        return size
 
 
     def _get_rgb_color_list(self, rgb_str):
@@ -1142,6 +1349,18 @@ edgecolors : color or sequence of color, optional, default: 'face'
         rgb_list = self._get_rgb_color_list(rgb_str)
         rgba_tuple = self._rgb_to_rgba_tuple(rgb_list, alpha)
         return self._rgb_tuple_to_str(rgba_tuple)
+
+    def _add_alpha_value(self, color, alpha):
+        if color[:3] == 'rgb':
+            rbga_color_str = self._update_alpha_in_rgb_str(color, alpha)
+        else:
+            try:
+                rbga_color_str = self._named_color_to_rgba_tuple(color)
+            except:
+                raise ValueError(f"unrecognised color {color}")
+
+        return rgba_color_str
+
 
     def _convert_color_to_rgba_str(self, color, alpha):
         if type(color) == str:
@@ -1177,7 +1396,387 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
         return color_rgba
 
+    def _set_marker_defaults(self):
+        marker_defaults = {'marker': {'color': self.lines['markerfacecolor'],
+                                   'size': self.lines['markersize'],
+                                   'line': {'color': self.lines['markeredgecolor'],
+                                            'width': self.lines['markeredgewidth']}},
+                        'marker_symbol': self.lines['marker']}
+        return marker_defaults
 
+    def _set_legend_defaults(self):
+        legend_defaults = {}
+
+        title_font = self._extract_font_properties({'size': self.legend['title_fontsize']})
+        legend_defaults['legend_title_font'] = title_font
+        font = self._extract_font_properties({'size': self.legend['fontsize']})
+        legend_defaults['font'] = font
+
+        loc = self.legend['loc']
+        legend_defaults.update(self._get_legend_loc_params(loc))
+
+        if self.legend['frameon']:
+            legend_defaults['borderwidth'] = self.lines['linewidth']
+            legend_defaults['bordercolor'] = self.legend['edgecolor']
+            legend_defaults['bgcolor'] = self.legend['facecolor']
+
+
+
+    def _get_legend_loc_params(self, loc):
+
+        loc_dict = {}
+        if (loc == 'best') | (loc == 0):
+            None
+        elif (loc == 'upper right') | (loc == 1):
+            loc_dict['xanchor'] = 'right'
+            loc_dict['yanchor'] = 'top'
+            loc_dict['x'] = 0.95
+            loc_dict['y'] = 0.95
+        elif (loc == 'upper left') | (loc == 2):
+            loc_dict['xanchor'] = 'left'
+            loc_dict['yanchor'] = 'top'
+            loc_dict['x'] = 0.05
+            loc_dict['y'] = 0.95
+        elif (loc == 'lower left') | (loc == 3):
+            loc_dict['xanchor'] = 'left'
+            loc_dict['yanchor'] = 'bottom'
+            loc_dict['x'] = 0.05
+            loc_dict['y'] = 0.05
+        elif (loc == 'lower right') | (loc == 4):
+            loc_dict['xanchor'] = 'right'
+            loc_dict['yanchor'] = 'bottom'
+            loc_dict['x'] = 0.95
+            loc_dict['y'] = 0.05
+        elif (loc == 'right') | (loc == 5):
+            loc_dict['xanchor'] = 'right'
+            loc_dict['yanchor'] = 'middle'
+            loc_dict['x'] = 0.95
+            loc_dict['y'] = 0.5
+        elif (loc == 'center left') | (loc == 6):
+            loc_dict['xanchor'] = 'left'
+            loc_dict['yanchor'] = 'middle'
+            loc_dict['x'] = 0.05
+            loc_dict['y'] = 0.5
+        elif (loc == 'center right') | (loc == 7):
+            loc_dict['xanchor'] = 'right'
+            loc_dict['yanchor'] = 'middle'
+            loc_dict['x'] = 0.95
+            loc_dict['y'] = 0.5
+        elif (loc == 'lower center') | (loc == 8):
+            loc_dict['xanchor'] = 'center'
+            loc_dict['yanchor'] = 'bottom'
+            loc_dict['x'] = 0.5
+            loc_dict['y'] = 0.05
+        elif (loc == 'upper center') | (loc == 9):
+            loc_dict['xanchor'] = 'center'
+            loc_dict['yanchor'] = 'top'
+            loc_dict['x'] = 0.5
+            loc_dict['y'] = 0.95
+        elif (loc == 'center') | (loc == 10):
+            loc_dict['xanchor'] = 'center'
+            loc_dict['yanchor'] = 'middle'
+            loc_dict['x'] = 0.5
+            loc_dict['y'] = 0.5
+        return loc_dict
+
+    def _read_in_rcParams(self, stylesheet_filename):
+
+        rcp = {}
+        with open(stylesheet_filename, "r") as f:
+            for line in f:
+                line = line.strip()
+                if len(line) > 0:
+                    if (':' in line) & ('.' in line) & (line[0] != '#'):
+                        try:
+                            rcpline = line.split(':')[: 2]
+                            rcp[rcpline[0].strip()] = rcpline[1].strip()
+                        except:
+                            raise ValueError(f"unpassable rcParam line {line}")
+
+        return rcp
+
+    def style_use(self, stylesheet_filename):
+
+        rcParams = self._read_in_rcParams(stylesheet_filename)
+
+        self.lines = {}
+        self.markers = {}
+        self.lines['width'] = float(rcParams.get('lines.linewidth', 1.5))
+        self.lines['dash'] = rcParams.get('lines.linestyle')
+        self.lines['color'] = rcParams.get('lines.color', 'steelblue')
+        # lines.dash_joinstyle : round        ## miter|round|bevel
+        # lines.dash_capstyle : butt          ## butt|round|projecting
+        # lines.solid_joinstyle : round       ## miter|round|bevel
+        # lines.solid_capstyle : projecting   ## butt|round|projecting
+        # lines.antialiased : True         ## render lines in antialiased (no jaggies)
+        # # The three standard dash patterns.  These are scaled by the linewidth.
+        # lines.dashed_pattern : 3.7, 1.6
+        # lines.dashdot_pattern : 6.4, 1.6, 1, 1.6
+        # lines.dotted_pattern : 1, 1.65
+        # lines.scale_dashes : True
+        self.markers = {'line': {}}
+        self.markers['symbol'] = rcParams.get('lines.marker', self.marker_dict['.'])
+        self.markers['color'] = rcParams.get('lines.markerfacecolor', 'steelblue')
+        self.markers['size'] = float(rcParams.get('lines.markersize', 10))
+        self.markers['line']['color'] = rcParams.get('lines.markeredgecolor', 'steelblue')
+        self.markers['line']['width'] = float(rcParams.get('lines.markeredgewidth', 1.5))
+
+        self.legend = {}
+        # 'legend.borderaxespad': 0.5,
+        # 'legend.borderpad': 0.4,
+        # 'legend.columnspacing': 2.0,
+        self.legend['edgecolor'] = rcParams.get('legend.edgecolor')
+        self.legend['facecolor'] = rcParams.get('legend.facecolor')
+        # 'legend.fancybox': True,
+        self.legend['fontsize'] = rcParams.get('legend.fontsize')
+        # 'legend.framealpha': 0.8,
+        self.legend['frameon'] = rcParams.get('legend.frameon', False)
+        # 'legend.handleheight': 0.7,
+        # 'legend.handlelength': 2.0,
+        # 'legend.handletextpad': 0.8,
+        # 'legend.labelspacing': 0.5,
+        self.legend['loc'] = rcParams.get('legend.loc', 'best')
+        # 'legend.markerscale': 1.0,
+        # 'legend.numpoints': 1,
+        # 'legend.scatterpoints': 1,
+        # 'legend.shadow': False,
+        self.legend['title_fontsize'] = rcParams.get('legend.title_fontsize')
+
+        self.patch = {}
+        self.patch['linewidth'] = float(rcParams.get('patchlinewidth', 0))
+        self.patch['facecolor'] = rcParams.get('patch.facecolor', 'steelblue')
+        self.patch['edgecolor'] = rcParams.get('patch.edgecolor')
+        # patch.force_edgecolor  : False   ## True to always use edgecolor
+        # patch.antialiased      : True    ## render patches in antialiased (no jaggies)
+
+        self.font = {}
+        self.font['family'] = rcParams.get('font.family', 'serif')
+        # font.style          : normal
+        # font.variant        : normal
+        self.font['weight'] = rcParams.get('font.weight')
+        # font.stretch        : normal
+        self.font['size'] = float(rcParams.get('font.size', 16))
+        # font.serif          : DejaVu Serif, Bitstream Vera Serif, Computer Modern Roman, New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman, Times, Palatino, Charter, serif
+        # font.sans-serif     : DejaVu Sans, Bitstream Vera Sans, Computer Modern Sans Serif, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif
+        # font.cursive        : Apple Chancery, Textile, Zapf Chancery, Sand, Script MT, Felipa, cursive
+        # font.fantasy        : Comic Sans MS, Chicago, Charcoal, ImpactWestern, Humor Sans, xkcd, fantasy
+        # font.monospace      : DejaVu Sans Mono, Bitstream Vera Sans Mono, Computer Modern Typewriter, Andale Mono, Nimbus Mono L, Courier New, Courier, Fixed, Terminal, monospace
+
+        self.text = {}
+        self.text['color'] = rcParams.get('text.color', 'grey')
+        self.text['usetex'] = rcParams.get('text.usetex', True)
+        # text.latex.preamble :      ## IMPROPER USE OF THIS FEATURE WILL LEAD TO LATEX FAILURES
+        # text.latex.preview : False
+        # text.hinting : auto   ## May be one of the following:
+        # text.hinting_factor : 8 ## Specifies the amount of softness for hinting in the
+        # text.antialiased : True ## If True (default), the text will be antialiased.
+
+        self.layout = {'xaxis': {'tickfont': {}, 'title': {}},
+                       'yaxis': {'tickfont': {}, 'title': {}},
+                       # 'zaxis': {'tickfont': {}, 'title': {}},
+                       'title': {}}
+        self.layout['plot_bgcolor'] = rcParams.get('axes.facecolor', 'rgba(0,0,0,0)')
+        self.layout['paper_bgcolor'] = self.layout['plot_bgcolor']
+        self.layout['xaxis']['linecolor'] = rcParams.get('axes.edgecolor', 'grey')
+        self.layout['xaxis']['linewidth'] = float(rcParams.get('axes.linewidth', 2))
+        self.layout['yaxis']['linecolor'] = rcParams.get('axes.edgecolor', 'grey')
+        self.layout['yaxis']['linewidth'] = float(rcParams.get('axes.linewidth', 2))
+        # self.layout['zaxis']['linecolor'] = rcParams.get('axes.edgecolor', 'grey')
+        # self.layout['zaxis']['linewidth'] = float(rcParams.get('axes.linewidth', 2))
+        if rcParams.get('axes.grid', False):
+            if rcParams.get('axes.grid.axis') == 'x':
+                self.layout['xaxis']['showgrid'] = True
+                self.layout['yaxis']['showgrid'] = False
+                # self.layout['zaxis']['showgrid'] = False
+            elif rcParams.get('axes.grid.axis') == 'y':
+                self.layout['xaxis']['showgrid'] = False
+                self.layout['yaxis']['showgrid'] = True
+                # self.layout['zaxis']['showgrid'] = False
+            elif rcParams.get('axes.grid.axis') == 'z':
+                self.layout['xaxis']['showgrid'] = False
+                self.layout['yaxis']['showgrid'] = False
+                # self.layout['zaxis']['showgrid'] = True
+            elif rcParams.get('axes.grid.axis') == 'both':
+                self.layout['xaxis']['showgrid'] = True
+                self.layout['yaxis']['showgrid'] = True
+                # self.layout['zaxis']['showgrid'] = True
+        self.layout['xaxis']['zeroline'] = False
+        self.layout['yaxis']['zeroline'] = False
+        # self.layout['zaxis']['zeroline'] = False
+        # axes.grid.which     : major   ## gridlines at major, minor or both ticks
+        self.layout['title']['font'] = {
+            'size': self._convert_relative_text_size(rcParams.get('axes.labelsize', 'x-large'))}
+        # axes.titleweight    : normal  ## font weight of title
+        # axes.titlepad       : 6.0     ## pad between axes and title in points
+        self.layout['xaxis']['title']['font'] = {
+            'size': self._convert_relative_text_size(rcParams.get('axes.labelsize', 'medium')),
+            'color': rcParams.get('axes.labelcolor', 'grey')}
+        self.layout['yaxis']['title']['font'] = {
+            'size': self._convert_relative_text_size(rcParams.get('axes.labelsize', 'medium')),
+            'color': rcParams.get('axes.labelcolor', 'grey')}
+        # self.layout['zaxis']['title']['font'] = {
+        #     'size': self._convert_relative_text_size(rcParams.get('axes.labelsize', 'medium')),
+        #     'color': rcParams.get('axes.labelcolor', 'grey')}
+        # axes.labelpad       : 4.0     ## space between label and axis
+        # axes.labelweight    : normal  ## weight of the x and y labels
+        # axes.axisbelow      : line    ## draw axis gridlines and ticks below
+        # axes.formatter.limits : -7, 7 ## use scientific notation if log10
+        # axes.formatter.use_locale : False ## When True, format tick labels
+        # axes.formatter.use_mathtext : False ## When True, use mathtext for scientific
+        # axes.formatter.min_exponent: 0 ## minimum exponent to format in scientific notation
+        # axes.formatter.useoffset      : True    ## If True, the tick label formatter
+        # axes.formatter.offset_threshold : 4     ## When useoffset is True, the offset
+
+        self.layout['yaxis']['showline'] = eval(rcParams.get('axes.spines.left', True))
+        self.layout['xaxis']['showline'] = eval(rcParams.get('axes.spines.bottom', True))
+        self.layout['xaxis']['mirror'] = eval(rcParams.get('axes.spines.top', False))
+        self.layout['yaxis']['mirror'] = eval(rcParams.get('axes.spines.right', False))
+
+        if (not self.layout['yaxis']['showline']) & self.layout['yaxis']['mirror']:
+            raise warnings.warn('Cannot display right spine without left spine in plotly')
+        if (not self.layout['xaxis']['showline']) & self.layout['xaxis']['mirror']:
+            raise warnings.warn('Cannot display top spine without bottom spine in plotly')
+
+        # axes.unicode_minus  : True    ## use unicode for the minus symbol
+        # axes.autolimit_mode : data ## How to scale axes limits to the data.
+        # axes.xmargin        : .05  ## x margin.  See `axes.Axes.margins`
+        # axes.ymargin        : .05  ## y margin See `axes.Axes.margins`
+        # polaraxes.grid      : True    ## display grid on polar axes
+        # axes3d.grid         : True    ## display grid on 3d axes
+
+## xtick properties
+        self.layout['xaxis']['ticks'] = None
+
+        if bool(rcParams.get('xtick.top', False)):
+            self.layout['xaxis']['ticks'] = 'inside'
+        if bool(rcParams.get('xtick.bottom', False)):
+            self.layout['xaxis']['ticks'] = 'outside'
+        # xtick.labeltop       : False  ## draw label on the top
+        # xtick.labelbottom    : True   ## draw label on the bottom
+        self.layout['xaxis']['ticklen'] = float(rcParams.get('xtick.major.size', 3.5))
+        # xtick.minor.size     : 2      ## minor tick size in points
+        self.layout['xaxis']['tickwidth'] = float(rcParams.get('xtick.major.width', 3.5))
+        # xtick.minor.width    : 0.6    ## minor tick width in points
+        # xtick.major.pad      : 3.5    ## distance to major tick label in points
+        # xtick.minor.pad      : 3.4    ## distance to the minor tick label in points
+        self.layout['xaxis']['tickfont']['family'] = self.font['family']
+        self.layout['xaxis']['color'] = rcParams.get('xtick.color', 'grey')
+        self.layout['xaxis']['tickfont']['size'] = self._convert_relative_text_size(
+            rcParams.get('xtick.labelsize', 'medium'))
+
+        if rcParams.get('xtick.direction', 'out') == 'out':
+            self.layout['xaxis']['ticks'] = 'outside'
+        else:
+            self.layout['xaxis']['ticks'] = 'inside'
+
+        if rcParams.get('xtick.major.top') is not None:
+            if rcParams.get('xtick.major.top'):
+                self.layout['xaxis']['ticks'] = 'inside'
+            else:
+                self.layout['xaxis']['ticks'] = 'outside'
+        if rcParams.get('xtick.major.bottom') is not None:
+            if rcParams.get('xtick.major.bottom'):
+                self.layout['xaxis']['ticks'] = 'outside'
+            else:
+                self.layout['xaxis']['ticks'] = 'inside'
+        # xtick.minor.visible  : False  ## visibility of minor ticks on x-axis
+        # xtick.major.top      : True   ## draw x axis top major ticks
+        # xtick.major.bottom   : True   ## draw x axis bottom major ticks
+        # xtick.minor.top      : True   ## draw x axis top minor ticks
+        # xtick.minor.bottom   : True   ## draw x axis bottom minor ticks
+        # xtick.alignment      : center ## alignment of xticks
+
+## ytick properties
+        self.layout['yaxis']['ticks'] = None
+        if bool(rcParams.get('ytick.top', False)):
+            self.layout['yaxis']['ticks'] = 'inside'
+        if bool(rcParams.get('ytick.bottom', False)):
+            self.layout['yaxis']['ticks'] = 'outside'
+        # ytick.labeltop       : False  ## draw label on the top
+        # ytick.labelbottom    : True   ## draw label on the bottom
+        self.layout['yaxis']['ticklen'] = float(rcParams.get('ytick.major.size', 3.5))
+        # ytick.minor.size     : 2      ## minor tick size in points
+        self.layout['yaxis']['tickwidth'] = float(rcParams.get('ytick.major.width', 3.5))
+        # ytick.minor.width    : 0.6    ## minor tick width in points
+        # ytick.major.pad      : 3.5    ## distance to major tick label in points
+        # ytick.minor.pad      : 3.4    ## distance to the minor tick label in points
+        self.layout['yaxis']['color'] = rcParams.get('ytick.color', 'grey')
+        self.layout['yaxis']['tickfont']['family'] = self.font['family']
+
+        self.layout['yaxis']['tickfont']['size'] = self._convert_relative_text_size(
+            rcParams.get('ytick.labelsize', 'medium'))
+
+        if rcParams.get('ytick.direction', 'out') == 'out':
+            self.layout['yaxis']['ticks'] = 'outside'
+        else:
+            self.layout['yaxis']['ticks'] = 'inside'
+
+        if rcParams.get('ytick.major.top') is not None:
+            if rcParams.get('ytick.major.top'):
+                self.layout['yaxis']['ticks'] = 'inside'
+            else:
+                self.layout['yaxis']['ticks'] = 'outside'
+        if rcParams.get('ytick.major.bottom') is not None:
+            if rcParams.get('ytick.major.bottom'):
+                self.layout['yaxis']['ticks'] = 'outside'
+            else:
+                self.layout['yaxis']['ticks'] = 'inside'
+
+#### GRIDS
+        self.layout['xaxis']['gridcolor'] = rcParams.get('grid.color', 'silver')
+        self.layout['yaxis']['gridcolor'] = rcParams.get('grid.color', 'silver')
+        # self.layout['xaxis']['gridcolor'] = rcParams.get('grid.color', 'silver')
+        #grid.linestyle   :   -         ## solid
+        self.layout['xaxis']['gridwidth'] = float(rcParams.get('grid.linewidth', 0.8))
+        self.layout['yaxis']['gridwidth'] = float(rcParams.get('grid.linewidth', 0.8))
+        # self.layout['xaxis']['gridwidth'] = float(rcParams.get('grid.linewidth', 0.8))
+        if rcParams.get('grid.alpha', 1) < 0:
+            self.layout['xaxis']['gridcolor'] = self._add_alpha_value(
+                self.layout['xaxis']['gridcolor'], rcParams.get('grid.alpha'))
+
+#### FIGURE
+        # self.figure = {}
+#figure.titlesize : large      ## size of the figure title (Figure.suptitle())
+#figure.titleweight : normal   ## weight of the figure title
+        self.figsize = rcParams.get('figure.figsize', (7, 5))
+#figure.dpi       : 100        ## figure dots per inch
+#figure.facecolor : white      ## figure facecolor
+#figure.edgecolor : white      ## figure edgecolor
+#figure.frameon : True         ## enable figure frame
+#figure.max_open_warning : 20  ## The maximum number of figures to open through
+                               ## the pyplot interface before emitting a warning.
+                               ## If less than one this feature is disabled.
+## The figure subplot parameters.  All dimensions are a fraction of the
+#figure.subplot.left    : 0.125  ## the left side of the subplots of the figure
+#figure.subplot.right   : 0.9    ## the right side of the subplots of the figure
+#figure.subplot.bottom  : 0.11   ## the bottom of the subplots of the figure
+#figure.subplot.top     : 0.88   ## the top of the subplots of the figure
+#figure.subplot.wspace  : 0.2    ## the amount of width reserved for space between subplots,
+                                 ## expressed as a fraction of the average axis width
+#figure.subplot.hspace  : 0.2    ## the amount of height reserved for space between subplots,
+                                 ## expressed as a fraction of the average axis height
+
+## Figure layout
+#figure.autolayout : False     ## When True, automatically adjust subplot
+                               ## parameters to make the plot fit the figure
+                               ## using `tight_layout`
+#figure.constrained_layout.use: False ## When True, automatically make plot
+                                      ## elements fit on the figure. (Not compatible
+                                      ## with `autolayout`, above).
+#figure.constrained_layout.h_pad : 0.04167 ## Padding around axes objects. Float representing
+#figure.constrained_layout.w_pad : 0.04167 ##  inches. Default is 3./72. inches (3 pts)
+#figure.constrained_layout.hspace : 0.02   ## Space between subplot groups. Float representing
+#figure.constrained_layout.wspace : 0.02   ##  a fraction of the subplot widths being separated.
+
+
+    def _get_plot_defaults(self):
+        return go.Scatter(marker=self.markers, line=self.lines)
+
+    def _get_scatter_defaults(self):
+        return go.Scatter(marker=self.markers)
+
+    def _get_bar_defaults(self):
+        return go.Bar()
 
 class figure_handle(object):
     def __init__(self, ax):
