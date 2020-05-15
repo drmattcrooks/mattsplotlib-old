@@ -1,8 +1,10 @@
 import plotly.graph_objects as go
 from mattsplotlib_class import mattsplotlib, figure_handle
+import style
 
-global _figure, _new_fig
+global _figure, _new_fig, _stylesheet
 _new_fig = True
+_stylesheet = 'empty_stylesheet.py'
 
 
 def figure():
@@ -101,6 +103,14 @@ def text(*args, **kwargs):
 
     _figure.text(*args, **kwargs)
 
+def fill(*args, **kwargs):
+    global _figure, _new_fig
+    if _new_fig:
+        figure()
+        _new_fig = False
+
+    _figure.fill(*args, **kwargs)
+
 
 def xlim(xlower, xupper):
     global _figure, _new_fig
@@ -141,3 +151,4 @@ def subplots(*args, **kwargs):
 def legend(*args, **kwargs):
     global _figure, _new_fig
     _figure.legend(*args, **kwargs)
+

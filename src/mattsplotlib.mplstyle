@@ -1,18 +1,36 @@
 font.size: 16
 font.family: serif
+
+lines.linewidth: 3
+
 legend.frameon: False
+
 text.color: grey
+
 xtick.color: grey
 ytick.color: grey
 xtick.major.width: 2
 ytick.major.width: 0
+xtick.bottom: True
+xtick.major.size: 5
+ytick.major.size: 0
+# ytick.family = serif
+
+
 axes.labelcolor: grey
+
+figure.figsize: 7, 5
+
 savefig.bbox: tight
 savefig.dpi: 500
 savefig.transparent: True
+
 axes.spines.bottom: False
 axes.spines.left: False
 axes.spines.right: False
 axes.spines.top: False
 axes.grid: True
 axes.grid.axis: y
+grid.color: grey
+axes.axisbelow: True
+
