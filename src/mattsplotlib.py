@@ -1,5 +1,7 @@
 import plotly.graph_objects as go
 from mattsplotlib_class import mattsplotlib, figure_handle
+from plotly.subplots import make_subplots
+import numpy as np
 import style
 
 global _figure, _new_fig, _stylesheet
@@ -7,10 +9,10 @@ _new_fig = True
 _stylesheet = 'empty_stylesheet.py'
 
 
-def figure():
+def figure(*args, **kwargs):
     global _figure, _new_fig
     _figure = mattsplotlib()
-    _figure.figure()
+    _figure.figure(*args, **kwargs)
 
 
 def bar(x, y,
@@ -143,10 +145,71 @@ def show():
     _new_fig = True
 
 def subplots(*args, **kwargs):
+    if len(args) == 0:
+        rows = 1
+        cols = 1
+    elif len(args) == 1:
+        rows = args[0]
+        cols = 1
+    elif len(args) == 2:
+        rows = args[0]
+        cols = args[1]
+
+    subplot_row_col = {'row': rows, 'col': cols}
+
     ax = mattsplotlib()
-    ax.figure(*args, **kwargs)
-    f = figure_handle(ax)
+    ax.make_subplots(rows, cols, *args, subplot_row_col=subplot_row_col, **kwargs)
+    f = ax.fig
     return f, ax
+
+def subplots(*args, **kwargs):
+    if len(args) == 0:
+        rows = 1
+        cols = 1
+    elif len(args) == 1:
+        rows = args[0]
+        cols = 1
+    elif len(args) == 2:
+        rows = args[0]
+        cols = args[1]
+
+    _kwargs = {}
+    _kwargs['shared_yaxes'] = kwargs.get('sharey', False)
+    _kwargs['shared_xaxes'] = kwargs.get('sharex', False)
+
+    figure = make_subplots(rows, cols, subplot_titles=tuple([' '] * (rows * cols)), **_kwargs)
+    figsize = kwargs.get('figsize', (10, 7))
+    subplot_layout = {'rows': rows,
+                      'cols': cols,
+                      'sharedy': kwargs.get('sharey', False),
+                      'sharedx': kwargs.get('sharex', False)}
+
+    return _generate_axes(rows=rows, cols=cols, figure=figure, figsize=figsize, subplot_layout=subplot_layout)
+
+
+def _generate_axes(rows=None, cols=None, figure=None, figsize=None, subplot_layout=None):
+    if rows * cols == 1:
+        axes = mattsplotlib(figure=figure,
+                            row=1,
+                            col=1,
+                            figsize=figsize,
+                            subplot_layout=subplot_layout,
+                            )
+    elif rows == 1:
+        axes = []
+        for c in range(1, cols + 1):
+            axes.append(mattsplotlib(figure=figure, row=1, col=c, figsize=figsize, subplot_layout=subplot_layout))
+    elif cols == 1:
+        axes = []
+        for r in range(1, rows + 1):
+            axes.append(mattsplotlib(figure=figure, row=r, col=1, figsize=figsize, subplot_layout=subplot_layout))
+    else:
+        axes = np.zeros((rows, cols))
+        for r in range(1, rows + 1):
+            for c in range(1, cols + 1):
+                axes[rows, cols] = mattsplotlib(figure=figure, row=r, col=c, figsize=figsize, subplot_layout=subplot_layout)
+
+    return figure, axes
 
 def legend(*args, **kwargs):
     global _figure, _new_fig

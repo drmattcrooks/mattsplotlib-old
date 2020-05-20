@@ -1,11 +1,10 @@
 font.size: 16
 font.family: serif
+text.color: grey
 
 lines.linewidth: 3
 
 legend.frameon: False
-
-text.color: grey
 
 xtick.color: grey
 ytick.color: grey
@@ -14,7 +13,6 @@ ytick.major.width: 0
 xtick.bottom: True
 xtick.major.size: 5
 ytick.major.size: 0
-# ytick.family = serif
 
 
 axes.labelcolor: grey
