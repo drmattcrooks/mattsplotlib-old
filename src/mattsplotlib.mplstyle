@@ -17,7 +17,7 @@ ytick.major.size: 0
 
 axes.labelcolor: grey
 
-figure.figsize: 7, 5
+figure.figsize: 10, 7
 
 savefig.bbox: tight
 savefig.dpi: 500

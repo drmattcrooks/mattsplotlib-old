@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6aa4e0da-2a85-42ac-8af7-cb7ae8b604a2" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/mattsplotlib_networkx.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mattsplotlib.mplstyle" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib.mplstyle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mattsplotlib.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mattsplotlib_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib_class.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -31,8 +28,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="449">
-              <caret line="2110" column="81" selection-start-line="2110" selection-start-column="81" selection-end-line="2110" selection-end-column="81" />
+            <state relative-caret-position="582">
+              <caret line="1299" column="65" selection-start-line="1299" selection-start-column="65" selection-end-line="1299" selection-end-column="65" />
               <folding>
                 <element signature="e#0#33#0" expanded="true" />
               </folding>
@@ -52,8 +49,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib.mplstyle">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="176">
-              <caret line="8" selection-start-line="8" selection-end-line="8" selection-end-column="11" />
+            <state relative-caret-position="418">
+              <caret line="19" column="21" selection-start-line="19" selection-start-column="21" selection-end-line="19" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -69,10 +66,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>next_plot</find>
-      <find>self.next_plot_color</find>
-      <find>_convert_color_to_rgba_str</find>
-      <find>self.layout =</find>
       <find>make_sub</find>
       <find>()</find>
       <find>set_title</find>
@@ -93,12 +86,16 @@
       <find>axes.spines.bottom</find>
       <find>shared</find>
       <find>subplot</find>
-      <find>def _scatter</find>
       <find>sharedy</find>
       <find>set_visible</find>
       <find>raise me</find>
       <find>raise warning</find>
       <find>raise war</find>
+      <find>def _scatter</find>
+      <find>kwargs['hovertext'] = self._par</find>
+      <find>_parse_hovertext</find>
+      <find>self.font</find>
+      <find>'\n</find>
     </findStrings>
     <replaceStrings>
       <replace>self.layout['yaxis']['tickfont']['size']</replace>
@@ -115,8 +112,8 @@
         <option value="$PROJECT_DIR$/src/style.py" />
         <option value="$PROJECT_DIR$/src/networkx.py" />
         <option value="$PROJECT_DIR$/src/mattsplotlib_networkx.py" />
-        <option value="$PROJECT_DIR$/src/mattsplotlib.mplstyle" />
         <option value="$PROJECT_DIR$/src/mattsplotlib.py" />
+        <option value="$PROJECT_DIR$/src/mattsplotlib.mplstyle" />
         <option value="$PROJECT_DIR$/src/mattsplotlib_class.py" />
       </list>
     </option>
@@ -233,15 +230,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mattsplotlib.mplstyle">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="176">
-          <caret line="8" selection-start-line="8" selection-end-line="8" selection-end-column="11" />
+        <state relative-caret-position="418">
+          <caret line="19" column="21" selection-start-line="19" selection-start-column="21" selection-end-line="19" selection-end-column="21" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="449">
-          <caret line="2110" column="81" selection-start-line="2110" selection-start-column="81" selection-end-line="2110" selection-end-column="81" />
+        <state relative-caret-position="582">
+          <caret line="1299" column="65" selection-start-line="1299" selection-start-column="65" selection-end-line="1299" selection-end-column="65" />
           <folding>
             <element signature="e#0#33#0" expanded="true" />
           </folding>

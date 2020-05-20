@@ -512,43 +512,76 @@ bar_mode : stacked
         self.fig.layout.xaxis['showline'] = True
 
     def scatter(self,
-                x,
-                y,
-                s=None,
-                c='steelblue',
-                marker=None,
-                cmap=None,
-                norm=None,
-                vmin=None,
-                vmax=None,
-                alpha=None,
-                linewidths=None,
-                edgecolors=None,
-                hoverinfo='text',
-                hovertext=None,
+                *args,
+                bubble=None,
                 **kwargs):
 
-        self._scatter(x,
-                      y,
-                      s=s,
-                      c=c,
-                      marker=marker,
-                      cmap=cmap,
-                      norm=norm,
-                      vmin=vmin,
-                      vmax=vmax,
-                      alpha=alpha,
+        if len(args) == 0:
+            if ('x' not in kwargs) & ('y' not in kwargs):
+                raise TypeError("scatter() missing 2 required positional arguments: 'x' and 'y'")
+            else:
+                x = kwargs.get('x')
+                y = kwargs.get('y')
+                s = kwargs.get('s')
+                c = kwargs.get('c', 'steelblue')
+        elif len(args) == 1:
+            if 'y' not in kwargs:
+                raise TypeError("scatter() missing 1 required positional argument: 'y'")
+            else:
+                x = args[0]
+                y = kwargs.get('y')
+                s = kwargs.get('s')
+                c = kwargs.get('c', 'steelblue')
+        elif len(args) == 2:
+            x = args[0]
+            y = args[1]
+            s = kwargs.get('s', )
+            c = kwargs.get('c', 'steelblue')
+        elif len(args) == 3:
+            x = args[0]
+            y = args[1]
+            s = args[2]
+            c = kwargs.get('c', 'steelblue')
+        elif len(args) == 4:
+            x = args[0]
+            y = args[1]
+            s = args[2]
+            c = args[3]
+
+        kwargs.pop('x', None)
+        kwargs.pop('y', None)
+        kwargs.pop('s', None)
+        kwargs.pop('c', None)
+
+        if bubble:
+            linewidths=1
+            edgecolor='white'
+            alpha = 0.5
+        else:
+            linewidths = 0
+            edgecolor = None
+            alpha = 1
+
+        if 'hovertext' in kwargs:
+            kwargs['hovertext'] = self._parse_hovertext(kwargs['hovertext'])
+
+        self._scatter(x, y, s, c,
                       linewidths=linewidths,
-                      edgecolors=edgecolors,
-                      hoverinfo=hoverinfo,
-                      hovertext=hovertext,
+                      edgecolor=edgecolor,
+                      alpha=alpha,
                       **kwargs)
+
+    def bubble(self,
+               *args,
+               **kwargs):
+
+        self.scatter(*args, bubble=True, **kwargs)
 
     def _scatter(self,
                 x,
                 y,
-                s=None,
-                c=None,
+                s,
+                c,
                 marker=None,
                 cmap=None,
                 norm=None,
@@ -556,7 +589,7 @@ bar_mode : stacked
                 vmax=None,
                 alpha=None,
                 linewidths=0,
-                edgecolors=None,
+                edgecolors='white',
                 hoverinfo='text',
                 hovertext=None,
                 line=None,
@@ -867,6 +900,9 @@ edgecolors : color or sequence of color, optional, default: 'face'
     def plot(self,
              *args,
              **kwargs):
+
+        if 'hovertext' in kwargs:
+            kwargs['hovertext'] = self._parse_hovertext(kwargs['hovertext'])
 
         if len(args) == 0:
             if ('x' not in kwargs) | (type(kwargs.get('x')) != str):
@@ -1247,6 +1283,25 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 **self.subplot_row_col
             )
 
+    def _parse_hovertext(self, hovertext):
+
+        if type(hovertext) == str:
+            self._parse_hovertest_string(hovertext)
+        elif type(hovertext) == list:
+            hovertext = [self._parse_hovertest_string(hovertext_string) for hovertext_string in hovertext]
+
+        return hovertext
+
+    def _parse_hovertest_string(self, hovertext_string):
+
+        if self.font['weight']:
+            hovertext_string = f"<b>{hovertext_string}</b>"
+
+        hovertext_string = hovertext_string.replace("\n", "<br>")
+
+        return hovertext_string
+
+
     def _format_axes(self, **kwargs):
         font = self._extract_font_properties(**kwargs)
         self.fig.update_xaxes(tickfont=font, **self.subplot_row_col)
@@ -1538,7 +1593,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
         return font
 
     def _convert_text_using_rcParams(self, string):
-        if self.font.weight:
+        if self.font['weight']:
             return f"<b>{string}</b>"
 
     def _convert_relative_text_size(self, size):
