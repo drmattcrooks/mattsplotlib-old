@@ -177,7 +177,10 @@ def subplots(*args, **kwargs):
     _kwargs['shared_yaxes'] = kwargs.get('sharey', False)
     _kwargs['shared_xaxes'] = kwargs.get('sharex', False)
 
-    figure = make_subplots(rows, cols, subplot_titles=tuple([' '] * (rows * cols)), **_kwargs)
+    subplot_figure = make_subplots(rows, cols, subplot_titles=tuple([' '] * (rows * cols)), **_kwargs)
+    figure = figure_handle(layout=subplot_figure.layout)
+    figure._grid_ref = subplot_figure._grid_ref
+
     figsize = kwargs.get('figsize', (10, 7))
     subplot_layout = {'rows': rows,
                       'cols': cols,

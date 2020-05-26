@@ -7,6 +7,11 @@ import matplotlib
 import style
 import matplotlib.colors as mcolors
 import plotly
+from pdf2image import convert_from_path, convert_from_bytes
+import tempfile
+from plotly.subplots import make_subplots
+
+
 
 class mattsplotlib():
     def __init__(self, **kwargs):
@@ -84,6 +89,7 @@ class mattsplotlib():
             self.fig.update_xaxes(title=None, **self.subplot_row_col)
             self.fig.update_xaxes(title=None, **self.subplot_row_col)
             self.fig.update_layout(legend={'itemsizing': 'constant'})
+            self.fig._set_rcParams(self.rcParams_savefig)
 
         else:
             self.subplot_row_col = None
@@ -115,6 +121,7 @@ class mattsplotlib():
         self.fig.update_xaxes(title=None, **self.subplot_row_col)
         self.fig.update_xaxes(title=None, **self.subplot_row_col)
         self.fig.update_layout(legend={'itemsizing': 'constant'})
+        self.fig._set_rcParams(self.rcParams_savefig)
 
     def nxdraw(self, *args, **kwargs):
         self._nxdraw(*args, **kwargs)
@@ -844,7 +851,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
             else:
                 hoverinfo = 'text'
 
-            hovertext = kwargs.get('hovertext')
+            hovertext = self._parse_hovertext(kwargs.get('hovertext', None))
 
             color = kwargs.get('color')
             if color is None:
@@ -903,6 +910,8 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
         if 'hovertext' in kwargs:
             kwargs['hovertext'] = self._parse_hovertext(kwargs['hovertext'])
+        else:
+            kwargs
 
         if len(args) == 0:
             if ('x' not in kwargs) | (type(kwargs.get('x')) != str):
@@ -1285,10 +1294,12 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
     def _parse_hovertext(self, hovertext):
 
-        if type(hovertext) == str:
-            self._parse_hovertest_string(hovertext)
-        elif type(hovertext) == list:
-            hovertext = [self._parse_hovertest_string(hovertext_string) for hovertext_string in hovertext]
+        if hovertext is not None:
+
+            if type(hovertext) == str:
+                self._parse_hovertest_string(hovertext)
+            elif type(hovertext) == list:
+                hovertext = [self._parse_hovertest_string(hovertext_string) for hovertext_string in hovertext]
 
         return hovertext
 
@@ -1414,14 +1425,14 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
     def set_title(self,
               title_text,
-              y=0.9,
+              y=1.0,
               **kwargs):
 
         "Set a title on the plot"
         font = self._extract_font_properties(**kwargs)
+        if 'fontweight' in kwargs:
+            title_text = f'<b>{title_text}</b>'.replace("\n", "<br>")
 
-        # if y > 1:
-        #     y += 0.1
         if self.subplot_row_col is None:
 
             self.fig.update_layout(title={
@@ -1439,7 +1450,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 self.fig.add_annotation(ann)
 
             plot_id = (self.subplot_row_col['row'] - 1) * self.subplot_layout['cols'] + self.subplot_row_col['col'] - 1
-            self.fig.layout.annotations[plot_id].update(text=title_text, y=y)
+            self.fig.layout.annotations[plot_id].update(text=title_text, y=y, font=font)
 
     def _order_data(self, data):
 
@@ -1576,6 +1587,22 @@ edgecolors : color or sequence of color, optional, default: 'face'
             self.fig.layout.legend['bordercolor'] = edgecolor
         if facecolor is not None:
             self.fig.layout.legend['bgcolor'] = facecolor
+
+    def grid(self, b, which=None, axis='both'):
+        if b:
+            if axis == 'x':
+                self.fig.update_xaxes(showgrid=True)
+                self.fig.update_yaxes(showgrid=False)
+            elif axis == 'y':
+                self.fig.update_xaxes(showgrid=False)
+                self.fig.update_yaxes(showgrid=True)
+            elif axis == 'both':
+                self.fig.update_xaxes(showgrid=True)
+                self.fig.update_yaxes(showgrid=True)
+        else:
+            self.fig.update_xaxes(showgrid=False)
+            self.fig.update_yaxes(showgrid=False)
+
 
     def _extract_font_properties(self, **kwargs):
         font = {}
@@ -2113,6 +2140,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
         ## savefig
         self.rcParams_savefig = {}
         self.rcParams_savefig['transparent'] = eval(rcParams.get('savefig.transparent', True))
+        self.rcParams_savefig['dpi'] = float(rcParams.get('savefig.dpi', 300))
 
     def _get_plot_defaults(self):
         return go.Scatter(marker=self.markers, line=self.lines)
@@ -2123,22 +2151,58 @@ edgecolors : color or sequence of color, optional, default: 'face'
     def _get_bar_defaults(self):
         return go.Bar()
 
+
 class figure_handle(go.Figure):
     def __init__(self, **kwargs):
-        data = kwargs.get('data')
-        layout = kwargs.get('layout')
+        if 'figure' in kwargs:
+            self.figure
+        data = kwargs.get('data', ())
+        layout = kwargs.get('layout', None)
         go.Figure.__init__(self, data=data, layout=layout)
+        self._rcParams_savefig = {'transparent': True,
+                                 'dpi': 200}
 
-    def savefig(self, filename):
-        if self.rcParams_savefig['transparent']:
-            self.f.update_layout(plot_bgcolor='rgba(0, 0, 0, 0)',
-                                 paper_bgcolor='rgba(0, 0, 0, 0)')
+    def savefig(self, filename, **kwargs):
 
-        self.write_image(filename)
+        if 'transparent' in kwargs:
+            self._rcParams_savefig['transparent'] = kwargs.get('transparent')
+        if 'dpi' in kwargs:
+            self._rcParams_savefig['dpi'] = kwargs.get('dpi')
 
-class subplot(mattsplotlib):
-    def __init__(self):
-        None
+        if self._rcParams_savefig['transparent']:
+            self.update_layout(plot_bgcolor='rgba(0, 0, 0, 0)',
+                               paper_bgcolor='rgba(0, 0, 0, 0)')
+
+        if filename[-4:] in ['.pdf', '.jpg']:
+            self.write_image(filename)
+        elif filename[-4:] == '.png':
+            with tempfile.TemporaryDirectory() as path:
+                #     images_from_path = convert_from_path('figures/bubble_plot_example.pdf', output_folder=path)
+                image = convert_from_bytes(open(f"filename[:-4].pdf", 'rb').read(),
+                                           single_file=True,
+                                           dpi=self._rcParams_savefig['dpi'],
+                                           transparent=True,
+                                           use_cropbox=True)
+                image[0].save(filename)
+
+    def _set_rcParams(self, rcParams_savefig):
+        self._rcParams_savefig = rcParams_savefig
+
+# class subplots_handle(make_subplots):
+#     def __init__(self, rows, cols, subplot_titles, **kwargs):
+#         make_subplots(rows, cols, subplot_titles, **kwargs).__init__(self)
+#
+#     def savefig(self, filename):
+#         if self.rcParams_savefig['transparent']:
+#             self.f.update_layout(plot_bgcolor='rgba(0, 0, 0, 0)',
+#                                  paper_bgcolor='rgba(0, 0, 0, 0)')
+#
+#         if filename[-4:] in ['.pdf', '.jpg']:
+#             self.write_image(filename)
+#         elif filename[-4:] == '.png':
+#             self.rcParams_savefig['dpi']
+#             self.write_image(filename.replace('.png', '_temp.pdf'))
+
 
 class spine_class():
     def __init__(self, label):

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6aa4e0da-2a85-42ac-8af7-cb7ae8b604a2" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/src/mattsplotlib.mplstyle" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib.mplstyle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mattsplotlib.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mattsplotlib_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib_class.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -16,8 +16,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="175">
-              <caret line="177" column="47" selection-start-line="177" selection-start-column="47" selection-end-line="177" selection-end-column="47" />
+            <state relative-caret-position="1512">
+              <caret line="182" lean-forward="true" selection-start-line="182" selection-end-line="182" />
               <folding>
                 <element signature="e#0#33#0" expanded="true" />
               </folding>
@@ -28,8 +28,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="582">
-              <caret line="1299" column="65" selection-start-line="1299" selection-start-column="65" selection-end-line="1299" selection-end-column="65" />
+            <state relative-caret-position="340">
+              <caret line="1297" lean-forward="true" selection-start-line="1297" selection-end-line="1297" />
               <folding>
                 <element signature="e#0#33#0" expanded="true" />
               </folding>
@@ -49,8 +49,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib.mplstyle">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="418">
-              <caret line="19" column="21" selection-start-line="19" selection-start-column="21" selection-end-line="19" selection-end-column="21" />
+            <state>
+              <caret column="12" selection-start-column="12" selection-end-column="12" />
             </state>
           </provider>
         </entry>
@@ -66,12 +66,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>make_sub</find>
-      <find>()</find>
-      <find>set_title</find>
-      <find>def set_ti</find>
-      <find>figure_han</find>
-      <find>self._format_axes()</find>
       <find>layout</find>
       <find>def _plot</find>
       <find>set_ylim</find>
@@ -86,7 +80,6 @@
       <find>axes.spines.bottom</find>
       <find>shared</find>
       <find>subplot</find>
-      <find>sharedy</find>
       <find>set_visible</find>
       <find>raise me</find>
       <find>raise warning</find>
@@ -96,6 +89,13 @@
       <find>_parse_hovertext</find>
       <find>self.font</find>
       <find>'\n</find>
+      <find>text</find>
+      <find>text(</find>
+      <find>&lt;/br</find>
+      <find>_extract_font_properties</find>
+      <find>set_title</find>
+      <find>sharedy</find>
+      <find>def grid</find>
     </findStrings>
     <replaceStrings>
       <replace>self.layout['yaxis']['tickfont']['size']</replace>
@@ -112,8 +112,8 @@
         <option value="$PROJECT_DIR$/src/style.py" />
         <option value="$PROJECT_DIR$/src/networkx.py" />
         <option value="$PROJECT_DIR$/src/mattsplotlib_networkx.py" />
-        <option value="$PROJECT_DIR$/src/mattsplotlib.py" />
         <option value="$PROJECT_DIR$/src/mattsplotlib.mplstyle" />
+        <option value="$PROJECT_DIR$/src/mattsplotlib.py" />
         <option value="$PROJECT_DIR$/src/mattsplotlib_class.py" />
       </list>
     </option>
@@ -211,6 +211,23 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/mattsplotlib.mplstyle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="12" selection-start-column="12" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mattsplotlib.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1512">
+          <caret line="182" lean-forward="true" selection-start-line="182" selection-end-line="182" />
+          <folding>
+            <element signature="e#0#33#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/style.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="66">
@@ -218,27 +235,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mattsplotlib.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="175">
-          <caret line="177" column="47" selection-start-line="177" selection-start-column="47" selection-end-line="177" selection-end-column="47" />
-          <folding>
-            <element signature="e#0#33#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mattsplotlib.mplstyle">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="418">
-          <caret line="19" column="21" selection-start-line="19" selection-start-column="21" selection-end-line="19" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="582">
-          <caret line="1299" column="65" selection-start-line="1299" selection-start-column="65" selection-end-line="1299" selection-end-column="65" />
+        <state relative-caret-position="340">
+          <caret line="1297" lean-forward="true" selection-start-line="1297" selection-end-line="1297" />
           <folding>
             <element signature="e#0#33#0" expanded="true" />
           </folding>
