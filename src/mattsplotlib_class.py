@@ -41,6 +41,7 @@ class mattsplotlib():
                             '|': 'line-ns',
                             '_': 'line-ew'}
 
+
         self.base_color_dict = {'b': 'blue',
                                 'g': 'green',
                                 'r': 'red',
@@ -50,7 +51,7 @@ class mattsplotlib():
                                 'k': 'black',
                                 'w': 'white'}
 
-        self.color_iterable = [self.matplotlibify_the_color(c) for c in list(mcolors.TABLEAU_COLORS.keys())]
+        self.color_iterable = ['steelblue', 'sandybrown', 'forestgreen', 'firebrick']#'[self._rgb_tuple_to_str(self.matplotlibify_the_color(c)) for c in list(mcolors.TABLEAU_COLORS.keys())]
 
         self.default_color = 'steelblue'
 
@@ -350,42 +351,56 @@ class mattsplotlib():
                     range=zrange)))
 
     def bar(self,
-            x,
-            y,
-            color=None,
-            alpha=1,
-            edgecolor=None,
-            linewidth=0,
-            tick_label=None,
-            log=False,
-            hoverinfo='text',
-            hovertext=None,
+            *args,
             **kwargs):
 
-        if color is not None:
-            color = self._get_default_plot_color()
+        if len(args) == 0:
+            raise TypeError("bar() missing 2 required positional arguments: 'x' and 'height'")
+        elif len(args) == 1:
+            raise TypeError("bar() missing 1 required positional argument: 'height'")
+        elif len(args) == 2:
+            x = list(args[0])
+            height = list(args[1])
+            kwargs.setdefault('width', 0.8)
+        elif len(args) == 3:
+            x = args[0]
+            height = args[1]
+            width = args[2]
+            if type(width) in (list, np.ndarray):
+                if len(width) == 1:
+                    width = width[0]
+                elif len(width) != len(x):
+                    raise ValueError("shape mismatch: objects cannot be broadcast to a single shape")
+            if 'width' in kwargs:
+                raise TypeError("bar() got multiple values for argument 'width'")
+            else:
+                kwargs['width'] = width
 
-        self._bar(x, y,
-                  color=color,
-                  alpha=alpha,
-                  edgecolor=edgecolor,
-                  linewidth=linewidth,
-                  tick_label=tick_label,
-                  log=log,
-                  hoverinfo=hoverinfo,
-                  hovertext=hovertext,
-                  **kwargs)
+        kwargs.setdefault('color', self._get_default_plot_color())
+        kwargs.setdefault('alpha', 1)
+        kwargs.setdefault('edgecolor', None)
+        kwargs.setdefault('linewidth', 0)
+        kwargs.setdefault('tick_label', None)
+        kwargs.setdefault('log', False)
+        kwargs.setdefault('hovertext', None)
+        kwargs.setdefault('hoverinfo', 'text')
+        if kwargs.get('align', 'center') == 'center':
+            kwargs['width'] = abs(kwargs['width'])
+            kwargs.setdefault('offset', - 0.5 * kwargs['width'])
+        elif kwargs.get('align', 'center') == 'edge':
+            if kwargs['width'] < 0:
+                kwargs.setdefault('offset', kwargs['width'])
+                kwargs['width'] = abs(kwargs['width'])
+            else:
+                kwargs.setdefault('offset', 0)
+        else:
+            if kwargs.get('align', 'center') == 'plotly':
+                kwargs['offset'] = None
+                kwargs['width'] = None
 
-    def _bar(self, x, y,
-             color=None,
-             alpha=1,
-             edgecolor=None,
-             linewidth=0,
-             tick_label=None,
-             log=False,
-             hoverinfo='text',
-             hovertext=None,
-             **kwargs):
+        self._bar(x=x, y=height, **kwargs)
+
+    def _bar(self, x, y, **kwargs):
         """
         Create a bar chart using matplotlib syntax
 
@@ -446,13 +461,10 @@ bar_mode : stacked
 
         self.plot_types.append('bar')
 
-        if log:
+        if kwargs['log']:
             yaxis_type = 'log'
         else:
             yaxis_type = 'linear'
-
-        if 'figsize' not in dir(self):
-            self.figsize = (10, 7)
 
         if 'xerr' in kwargs:
             warnings.warn('xerr specified - this feature is not support yet and the argument will be ignored')
@@ -462,61 +474,35 @@ bar_mode : stacked
         # perturb x so that multiple bars at the same x location don't get offset
         eps = 1e-3
         eps_rand = np.random.uniform(1 - 2 * eps, 1 - eps)
-        # print(eps_rand)
-        x = np.array(x) * eps_rand
-        x = list(x)
-        y = list(y)
 
-        width = kwargs.get('width', 0.9)
+        bar_trace = self._get_bar_defaults()
+        bar_trace.update(x=x,
+                         y=y,
+                         type='bar',
+                         hoverinfo=kwargs['hoverinfo'],
+                         hovertext=kwargs['hovertext'],
+                         marker={'color': kwargs['color'],
+                                 'opacity': kwargs['alpha'],
+                                 'line': {'color': kwargs['edgecolor'],
+                                          'width': kwargs['linewidth']}},
+                         width=kwargs['width'],
+                         offset=kwargs['offset'])
 
-        bar_data = {'x': x,
-                    'y': y,
-                    'type': 'bar',
-                    'marker': {'color': color,
-                               'opacity': alpha,
-                               'line': {'color': edgecolor, 'width': linewidth}},
-                    'hoverinfo': hoverinfo,
-                    'hovertext': hovertext,
-                    'width': width}
-
-
+        if 'fig' not in dir(self):
+            self.figure()
 
         if 'name' in kwargs:
-            bar_data['name'] = kwargs['name']
+            bar_trace['name'] = kwargs['name']
             self.fig.update_layout(showlegend=True)
         else:
             if not self.fig.layout.showlegend:
                 self.fig.update_layout(showlegend=False)
 
-        layout = {'plot_bgcolor': 'rgba(0,0,0,0)',
-                  'paper_bgcolor': 'rgba(0,0,0,0)',
-                  'width': self.figsize[0] * 500 / 7,
-                  'height': self.figsize[1] * 500 / 7,
-                  'font': {'color': 'silver'},
-                  'xaxis': {'title': 'x',
-                            'color': 'grey'},
-                  'yaxis': {'title': 'y',
-                            'type': yaxis_type,
-                            'color': 'grey'},
-                  'margin': {'l': 20,
-                             'r': 20,
-                             'b': 20,
-                             't': 50}}
+        if kwargs['tick_label'] is not None:
+            self.fig.layout.xaxis['tickvals'] = x
+            self.fig.layout.xaxis['ticktext'] = kwargs['tick_label']
 
-        if 'fig' not in dir(self):
-            self.figure()
-
-        data = go.Bar(bar_data)
-
-        self.fig.add_trace(data)
-        self.fig.update_layout(layout)
-
-        if tick_label is not None:
-            self.fig.layout.xaxis['tickvals'] = list(x)
-            self.fig.layout.xaxis['ticktext'] = tick_label
-
-        self._format_axes()
-        self.fig.layout.xaxis['showline'] = True
+        self.fig.add_trace(bar_trace, **self.subplot_row_col)
 
     def scatter(self,
                 *args,
@@ -753,37 +739,62 @@ edgecolors : color or sequence of color, optional, default: 'face'
             if not self.fig.layout.showlegend:
                 self.fig.update_layout(showlegend=False)
 
-
-        #
-        # layout = {
-        #           'width': self.figsize[0] * 500 / 7,
-        #           'height': self.figsize[1] * 500 / 7,
-        #           'font': {'color': 'silver'},
-        #           'margin': {'l': 20,
-        #                      'r': 20,
-        #                      'b': 20,
-        #                      't': 50}}
-        ##
-        # self.fig.update_xaxes(self.rcParams_layout['xaxis'], **self.subplot_row_col)
-        # self.fig.update_yaxes(self.rcParams_layout['yaxis'], **self.subplot_row_col)
-        #
-        # self.fig.update_xaxes(title=None, **self.subplot_row_col)
-        # self.fig.update_xaxes(title=None, **self.subplot_row_col)
-        # self.fig.update_layout(legend={'itemsizing': 'constant'})
-        ##
-
-
-
         data = go.Scatter(scatter_data)
 
         self.fig.add_trace(data, **self.subplot_row_col)
-        # self.fig.update_layout(layout)
-        # self._format_axes()
 
-        # self.fig.update_layout(legend={'itemsizing': 'constant'})
+    def _interpret_fmt(self, fmt):
+
+        fmt_colour = []
+        fmt_line = []
+        fmt_marker = []
+
+        for colour in self.base_color_dict:
+            if colour in fmt:
+                fmt_colour.append(colour)
+
+        for line in ['--', '-.', ':', '-']:
+            if line in fmt:
+                fmt_line.append(line)
+                fmt = fmt.replace(line, '')
+
+        for marker in self.marker_dict:
+            if marker in fmt:
+                fmt_marker.append(marker)
+
+        if len(colour) > 1:
+            raise ValueError(f"Illegal format string {fmt}; two color symbols")
+        if len(line) > 1:
+            raise ValueError(f"Illegal format string {fmt}; two line style symbols")
+        if len(marker) > 1:
+            raise ValueError(f"Illegal format string {fmt}; two marker symbols")
+
+        plot_style_dict = {'line': dict(),
+                           'marker': {'line': dict()},
+                           'marker_symbol': None,
+                           'mode': 'lines'}
+
+        if len(fmt_colour) == 1:
+            plot_style_dict['line']['color'] = self.base_color_dict[fmt_colour[0]]
+            plot_style_dict['marker']['color'] = self.base_color_dict[fmt_colour[0]]
+            plot_style_dict['marker']['line']['color'] = self.base_color_dict[fmt_colour[0]]
+        if len(fmt_marker) == 1:
+            plot_style_dict['marker_symbol'] = self.marker_dict[fmt_marker[0]]
+            plot_style_dict['marker']['size'] = self.markers['size']
+            if fmt_line == []:
+                plot_style_dict['mode'] = 'markers'
+            else:
+                plot_style_dict['mode'] = 'lines+markers'
+        if len(fmt_line) == 1:
+            plot_style_dict['line']['dash'] = self.line_style_dict[fmt_line[0]]
+
+        return plot_style_dict
+
+
 
     def _plot(self,
               *args,
+              plot_style_dict={},
               **kwargs):
             """
     A scatter plot of *y* vs *x* with varying marker size and/or color.
@@ -844,49 +855,15 @@ edgecolors : color or sequence of color, optional, default: 'face'
             if type(y) == range:
                 y = list(y)
 
-            dash = kwargs.get('linestyle', self.lines['dash'])
-
-            if 'hoverinfo' in kwargs:
-                hoverinfo = kwargs['hoverinfo']
-            else:
-                hoverinfo = 'text'
-
-            hovertext = self._parse_hovertext(kwargs.get('hovertext', None))
-
-            color = kwargs.get('color')
-            if color is None:
-                color = self._get_default_plot_color()
-
-            linewidth = kwargs.get('linewidth', self.lines['width'])
-
-            color_rgba = self._convert_color_to_rgba_str(color, kwargs.get('alpha'))
-
-            mode = 'lines'
-            if dash == '-':
-                dash = None
-            elif dash == '.':
-                dash = 'dot'
-            elif dash == '--':
-                dash = 'dash'
-            elif dash == '-.':
-                dash = 'dashdot'
-            elif dash == '.-':
-                dash = None
-                mode = 'markers+lines'
-
             plot_trace = self._get_plot_defaults()
             plot_trace.update(x=x,
                               y=y,
-                              mode=mode,
-                              hoverinfo=hoverinfo,
-                              hovertext=hovertext,
-                              line={'color': color_rgba,
-                                    'width': linewidth,
-                                    'dash': dash})
-            # self.fig.update_layout({'plot_bgcolor': self.rcParams_layout['plot_bgcolor'],
-            #                         'paper_bgcolor': self.rcParams_layout['paper_bgcolor']})
-            # self.fig.update_xaxes(self.rcParams_layout['xaxis'], **self.subplot_row_col)
-            # self.fig.update_yaxes(self.rcParams_layout['yaxis'], **self.subplot_row_col)
+                              hoverinfo=kwargs['hoverinfo'],
+                              hovertext=kwargs['hovertext'],
+                              **plot_style_dict)
+
+            if 'fig' not in dir(self):
+                self.figure()
 
             if 'name' in kwargs:
                 plot_trace['name'] = kwargs['name']
@@ -895,23 +872,83 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 if not self.fig.layout.showlegend:
                     self.fig.update_layout(showlegend=False)
 
-            if 'fig' not in dir(self):
-                self.figure()
-
             self.fig.add_trace(plot_trace, **self.subplot_row_col)
-            # # self._format_axes()
-            # self.fig.update_xaxes(title=None, **self.subplot_row_col)
-            # self.fig.update_xaxes(title=None, **self.subplot_row_col)
-            # self.fig.update_layout(legend={'itemsizing': 'constant'})
+
+    def _get_plot_styles(self, fmt, **kwargs):
+
+        if fmt is None:
+            fmt = ''
+        plot_style_dict = self._interpret_fmt(fmt)
+
+        if 'color' in kwargs:
+            color = self._convert_color_to_rgba_str(kwargs.get('color'), kwargs.get('alpha'))
+            plot_style_dict['line']['color'] = color
+            plot_style_dict['marker']['color'] = color
+            plot_style_dict['marker']['line']['color'] = color
+        else:
+            if 'color' not in plot_style_dict['line']:
+
+                default_color = self._get_default_plot_color()
+                default_color = self._convert_color_to_rgba_str(kwargs.get('color'), kwargs.get('alpha'))
+
+                plot_style_dict['line']['color'] = default_color
+                plot_style_dict['marker']['color'] = default_color
+                plot_style_dict['marker']['line']['color'] = default_color
+
+        plot_style_dict['line']['width'] = kwargs.get('linewidth', self.lines['width'])
+        plot_style_dict['marker']['line']['width'] = kwargs.get('linewidth', 1)
+
+        if 'marker' in kwargs:
+            plot_style_dict['marker_symbol'] = self.marker_dict[kwargs['marker']]
+            if plot_style_dict['mode'] == 'lines':
+                plot_style_dict['mode'] = 'lines+markers'
+        if 'markersize' in kwargs:
+            plot_style_dict['marker']['size'] = kwargs['markersize']
+        if 'markeredgewidth' in kwargs:
+            plot_style_dict['marker']['line']['width'] = kwargs['markeredgewidth']
+        if 'markeredgecolor' in kwargs:
+            plot_style_dict['marker']['line']['color'] = kwargs['markeredgecolor']
+        if 'markerfacecolor' in kwargs:
+            plot_style_dict['marker']['color'] = kwargs['markerfacecolor']
+
+        return plot_style_dict
+
+
 
     def plot(self,
              *args,
              **kwargs):
 
-        if 'hovertext' in kwargs:
-            kwargs['hovertext'] = self._parse_hovertext(kwargs['hovertext'])
-        else:
-            kwargs
+        kwargs.setdefault('hovertext', None)
+        kwargs['hovertext'] = self._parse_hovertext(kwargs['hovertext'])
+        kwargs.setdefault('linestyle', self.lines['dash'])
+        kwargs.setdefault('hoverinfo', 'text')
+        # kwargs.setdefault('color', None)
+        # if kwargs['color'] is None:
+        #     kwargs['color'] = self._get_default_plot_color()
+        #     kwargs['color'] = self._convert_color_to_rgba_str(kwargs.get('color'), kwargs.get('alpha'))
+        #
+        # else:
+        #     kwargs['color'] = self._convert_color_to_rgba_str(kwargs.get('color'), kwargs.get('alpha'))
+
+        # kwargs.setdefault('linewidth', self.lines['width'])
+        #
+        # mode = 'lines'
+        # dash = kwargs.get('linestyle', self.lines['dash'])
+        # if dash == '-':
+        #     dash = None
+        # elif dash == '.':
+        #     dash = 'dot'
+        #     mode = 'markers'
+        # elif dash == '--':
+        #     dash = 'dash'
+        # elif dash == '-.':
+        #     dash = 'dashdot'
+        # elif dash == '.-':
+        #     dash = None
+        #     mode = 'markers+lines'
+        # kwargs['dash'] = dash
+        # kwargs['mode'] = mode
 
         if len(args) == 0:
             if ('x' not in kwargs) | (type(kwargs.get('x')) != str):
@@ -920,6 +957,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 raise ValueError(f"If specifying y as a keyword argument it should be a string column in a dataframe")
 
             else:
+
                 if 'df' not in kwargs:
                     raise ValueError("Keyword argument df not specified")
 
@@ -947,7 +985,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
                             if hovertext_col is not None:
                                 _kwargs['hovertext'] = list(df.loc[df[color_col] == cat, hovertext_col])
 
-                            self._plot(**kwargs_)
+                            self._plot(**_kwargs)
                 else:
                     df = kwargs['df']
                     _kwargs = dict(kwargs)
@@ -959,7 +997,8 @@ edgecolors : color or sequence of color, optional, default: 'face'
                         except:
                             raise ValueError(f"Unrecognised color {kwargs.get('color')}")
 
-                    self._plot(**_kwargs)
+                    plot_style_dict = self._get_plot_styles(None, **_kwargs)
+                    self._plot(plot_style_dict=plot_style_dict, **_kwargs)
         elif len(args) == 1:
             if type(args[0]) == str:
                 raise ValueError(f"""Incorrect type for y coordinates. Must be one of the following:
@@ -970,18 +1009,18 @@ edgecolors : color or sequence of color, optional, default: 'face'
             kwargs['y'] = args[0]
             kwargs['x'] = range(len(kwargs['y']))
 
-            self._plot(**kwargs)
+            plot_style_dict = self._get_plot_styles(None, **kwargs)
+            self._plot(plot_style_dict=plot_style_dict, **kwargs)
 
         elif (len(args) == 2) & (type(args[1]) != str):
             kwargs['x'] = args[0]
             kwargs['y'] = args[1]
-
-            self._plot(**kwargs)
+            plot_style_dict = self._get_plot_styles(None, **kwargs)
+            self._plot(plot_style_dict=plot_style_dict, **kwargs)
 
         elif len(args) <= 3:
             if type(args[1]) == str:
                 args = (range(len(args[0])), args[0], args[1])
-
 
             kwargs['x'] = args[0]
             kwargs['y'] = args[1]
@@ -991,30 +1030,49 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 kwargs['color'] = kwargs.get('color', color)
             except:
                 try:
-                    if len(args[2]) == 1:
-                        if args[2] in self.marker_dict.keys():
-                            kwargs['linestyle'] = kwargs.get('linestyle', args[2])
-                        elif args[2] in self.marker_dict.keys():
-                            kwargs['color'] = self.matplotlibify_the_color(kwargs.get('color', args[2]))
-
-                    for marker in ['-', '--'] + list(self.marker_dict.keys()):
-                        for base_color in [''] + list(self.base_color_dict.keys()):
-                            if args[2] == marker + base_color:
-                                kwargs['linestyle'] = kwargs.get('linestyle', marker)
-                                kwargs['color'] = self.matplotlibify_the_color(kwargs.get('color', base_color))
-                                break
-                            elif args[2] == base_color + marker:
-                                kwargs['linestyle'] = kwargs.get('linestyle', marker)
-                                kwargs['color'] = self.matplotlibify_the_color(kwargs.get('color', base_color))
-                                break
+                    plot_style_dict = self._get_plot_styles(args[2], **kwargs)
+                    # if len(args[2]) == 1:
+                    #     if args[2] in self.marker_dict.keys():
+                    #         kwargs['linestyle'] = kwargs.get('linestyle', args[2])
+                    #         if args[2] == '.':
+                    #             kwargs['mode'] = 'markers'
+                    #     elif args[2] in self.base_color_dict.keys():
+                    #         kwargs['color'] = self.matplotlibify_the_color(kwargs.get('color', args[2]))
+                    #         kwargs['color'] = self._convert_color_to_rgba_str(kwargs.get('color'), kwargs.get('alpha'))
+                    #
+                    # for marker in ['-', '--'] + list(self.marker_dict.keys()):
+                    #     for base_color in [''] + list(self.base_color_dict.keys()):
+                    #         if args[2] == marker + base_color:
+                    #             kwargs['linestyle'] = kwargs.get('linestyle', marker)
+                    #             kwargs['color'] = self.matplotlibify_the_color(kwargs.get('color', base_color))
+                    #             kwargs['color'] = self._convert_color_to_rgba_str(kwargs.get('color'), kwargs.get('alpha'))
+                    #             if marker in list(self.marker_dict.keys()):
+                    #                 kwargs['mode'] = 'markers'
+                    #                 kwargs['marker'] = {'color': kwargs['color'],
+                    #                                     'line': {'width': kwargs['linewidth'],
+                    #                                              'color': kwargs['color']},
+                    #                                     'size': kwargs.get('markersize', 5)}
+                    #             break
+                    #         elif args[2] == base_color + marker:
+                    #             kwargs['linestyle'] = kwargs.get('linestyle', marker)
+                    #             kwargs['color'] = self.matplotlibify_the_color(kwargs.get('color', base_color))
+                    #             kwargs['color'] = self._convert_color_to_rgba_str(kwargs.get('color'), kwargs.get('alpha'))
+                    #             if marker in list(self.marker_dict.keys()):
+                    #                 kwargs['mode'] = 'markers'
+                    #                 kwargs['marker'] = {'color': kwargs['color'],
+                    #                                     'line': {'width': kwargs['linewidth'],
+                    #                                              'color': kwargs['color']},
+                    #                                     'size': kwargs.get('markersize', 5)}
+                    #
+                    #             break
                 except:
                     string = args[2]
-                    for marker in self.marker_dict.keys():
-                        print(marker)
-                        string = string.replace(marker, '')
+                    # for marker in self.marker_dict.keys():
+                    #     print(marker)
+                    #     string = string.replace(marker, '')
                     raise ValueError(f"Unrecognized character {string} in format string")
 
-            self._plot(**kwargs)
+            self._plot(plot_style_dict=plot_style_dict, **kwargs)
 
         elif len(args) > 3:
             raise ValueError(f"Mattsplotlib does not support {len(args)} positional arguments. Try using keyword arguments instead")
@@ -1082,13 +1140,36 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self._text(x, y, s, **kwargs)
 
     def fill(self, *args, **kwargs):
-        if len(args) == 0:
-            # self._fill(*args, **kwargs)
-            None
+        if len(args) <= 3:
+            if 'color' in kwargs:
+               if 'c' in kwargs:
+                   warnings.warn("Saw kwargs ['c', 'color'] which are all aliases for 'color'.  Kept value from 'color')")
+               color = kwargs['color']
+            elif 'c' in kwargs:
+                color = kwargs['c']
+            elif len(args) == 3:
+                color = args[2]
+            else:
+                color = self._get_default_plot_color()
+
+            kwargs.pop('color')
+
+            if len(args) == 0:
+                None
+            if len(args) == 1:
+                y = list(args[0])
+                x = list(range(len(y)))
+            elif len(args) == 2:
+                x = args[0]
+                y = args[1]
+            elif len(args) == 3:
+                x = args[0]
+                y = args[1]
+
+            self._fill(x, y, color, **kwargs)
+
+
         else:
-            # if len(args) < 3:
-            #     None
-            # else:
             while len(args) > 0:
                 fill_arg, args = self._split_fill_args(*args)
                 self._fill(*fill_arg, **kwargs)
@@ -1153,7 +1234,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
         else:
             raise ValueError(f"Cannot perform fill on args {args}")
 
-    def _fill(self, *args, **kwargs):
+    def _fill(self, x, y, color, **kwargs):
 
         self.plot_types.append('fill')
 
@@ -1162,80 +1243,93 @@ edgecolors : color or sequence of color, optional, default: 'face'
             hoverinfo = 'text'
         else:
             hoverinfo = 'skip'
-
-        showlegend = True#kwargs.get('showlegend', False)
-
-        fill_type = self._get_fill_type(*args)
+        #
+        showlegend = kwargs.get('showlegend', False)
+        #
+        # fill_type = self._get_fill_type(*args)
         alpha = kwargs.get('alpha', 1)
+        fill_data = {'x': x,
+                     'y': y,
+                     'mode': 'lines',
+                     'fill': 'toself',
+                     'fillcolor': color,
+                     'hoverinfo': hoverinfo,
+                     'hovertext': hovertext,
+                     'line_width': 0,
+                     'opacity': alpha}
+        layout = {'showlegend': showlegend}
+        self.fig.add_trace(fill_data)
+        self.fig.update_layout(layout)
 
-        if fill_type == 'list+list+str_':
-            x = args[0]
-            y = args[1]
-            fillcolor = args[2]
-            fill_data = {'x': x,
-                         'y': y,
-                         'mode': 'lines',
-                         'fill' : 'toself',
-                         'fillcolor': fillcolor,
-                         'hoverinfo': hoverinfo,
-                         'hovertext': hovertext,
-                         'line_width': 0,
-                         'opacity': alpha}
-            layout = {'showlegend': showlegend}
-            self.fig.add_trace(fill_data)
-            self.fig.update_layout(layout)
-
-        elif fill_type == 'list+list':
-            x = args[0]
-            y = args[1]
-            fillcolor = self._get_default_plot_color()
-
-            self.fig.add_trace(
-                go.Scatter(x=x,
-                           y=y,
-                           mode='lines',
-                           fill='toself',
-                           fillcolor=fillcolor,
-                           line_color=None,
-                           hoverinfo=hoverinfo,
-                           hovertext=hovertext,
-                           line_width=0,
-                           opacity=alpha,
-                           showlegend=showlegend))
-        elif fill_type == 'list+str_':
-            y = args[0]
-            x = list(range(len(y)))
-            fillcolor = args[1]
-
-            self.fig.add_trace(
-                go.Scatter(x=x,
-                           y=y,
-                           mode='lines',
-                           fill='toself',
-                           fillcolor=fillcolor,
-                           line_color=None,
-                           hoverinfo=hoverinfo,
-                           hovertext=hovertext,
-                           line_width=0,
-                           opacity=alpha,
-                           showlegend=showlegend))
-        elif fill_type == 'list':
-            y = args[0]
-            x = list(range(len(y)))
-            fillcolor = self._get_default_plot_color()
-
-            self.fig.add_trace(
-                go.Scatter(x=x,
-                           y=y,
-                           mode='lines',
-                           fill='toself',
-                           fillcolor=fillcolor,
-                           line_color=None,
-                           hoverinfo=hoverinfo,
-                           hovertext=hovertext,
-                           line_width=0,
-                           opacity=alpha,
-                           showlegend=showlegend))
+        #
+        # if fill_type == 'list+list+str_':
+        #     x = args[0]
+        #     y = args[1]
+        #     fillcolor = args[2]
+        #     fill_data = {'x': x,
+        #                  'y': y,
+        #                  'mode': 'lines',
+        #                  'fill' : 'toself',
+        #                  'fillcolor': fillcolor,
+        #                  'hoverinfo': hoverinfo,
+        #                  'hovertext': hovertext,
+        #                  'line_width': 0,
+        #                  'opacity': alpha}
+        #     layout = {'showlegend': showlegend}
+        #     self.fig.add_trace(fill_data)
+        #     self.fig.update_layout(layout)
+        #
+        # elif fill_type == 'list+list':
+        #     x = args[0]
+        #     y = args[1]
+        #     fillcolor = self._get_default_plot_color()
+        #
+        #     self.fig.add_trace(
+        #         go.Scatter(x=x,
+        #                    y=y,
+        #                    mode='lines',
+        #                    fill='toself',
+        #                    fillcolor=fillcolor,
+        #                    line_color=None,
+        #                    hoverinfo=hoverinfo,
+        #                    hovertext=hovertext,
+        #                    line_width=0,
+        #                    opacity=alpha,
+        #                    showlegend=showlegend))
+        # elif fill_type == 'list+str_':
+        #     y = args[0]
+        #     x = list(range(len(y)))
+        #     fillcolor = args[1]
+        #
+        #     self.fig.add_trace(
+        #         go.Scatter(x=x,
+        #                    y=y,
+        #                    mode='lines',
+        #                    fill='toself',
+        #                    fillcolor=fillcolor,
+        #                    line_color=None,
+        #                    hoverinfo=hoverinfo,
+        #                    hovertext=hovertext,
+        #                    line_width=0,
+        #                    opacity=alpha,
+        #                    showlegend=showlegend))
+        # elif fill_type == 'list':
+        #     y = args[0]
+        #     x = list(range(len(y)))
+        #     fillcolor = self._get_default_plot_color()
+        #
+        #     self.fig.add_trace(
+        #         go.Scatter(x=x,
+        #                    y=y,
+        #                    mode='lines',
+        #                    fill='toself',
+        #                    fillcolor=fillcolor,
+        #                    line_color=None,
+        #                    hoverinfo=hoverinfo,
+        #                    hovertext=hovertext,
+        #                    line_width=0,
+        #                    opacity=alpha,
+        #                    showlegend=showlegend))
 
     def _text(self, *args, **kwargs):
 
@@ -1259,8 +1353,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 s = f"<b>{s}</b>"
 
         font = self._extract_font_properties(**kwargs)
-
-        if self.subplot_row_col != (1, 1):
+        if (self.subplot_row_col['row'], self.subplot_row_col['col']) != (1, 1):
             self.fig.add_annotation(
                 x=x,
                 y=y,
@@ -1275,10 +1368,10 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 **self.subplot_row_col
             )
         else:
-            ann = list(f.layout.annotations)
+            ann = list(self.fig.layout.annotations)
             for ann_ in ann:
-                f.add_annotation(ann_)
-            self.fig.layout.annotations.extend(
+                self.fig.add_annotation(ann_)
+            self.fig.add_annotation(
                 x=x,
                 y=y,
                 xref='x',
@@ -1293,14 +1386,12 @@ edgecolors : color or sequence of color, optional, default: 'face'
             )
 
     def _parse_hovertext(self, hovertext):
-
         if hovertext is not None:
 
             if type(hovertext) == str:
                 self._parse_hovertest_string(hovertext)
             elif type(hovertext) == list:
                 hovertext = [self._parse_hovertest_string(hovertext_string) for hovertext_string in hovertext]
-
         return hovertext
 
     def _parse_hovertest_string(self, hovertext_string):
@@ -1409,13 +1500,13 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
     def set_ylim(self, ylim_lower, ylim_upper, *args, **kwargs):
         "Set lower and upper limits on y axis"
-        if ylim_lower == 0:
-            ylim_lower = - 0.01 * ylim_upper
+        # if ylim_lower == 0:
+        #     ylim_lower = - 0.01 * ylim_upper
 
         if self.subplot_layout.get('sharedy', None):
-            self.fig.update_yaxes(range=[ylim_lower, ylim_upper * 1.01], row=1, col=1)
+            self.fig.update_yaxes(range=[ylim_lower, ylim_upper], row=1, col=1)
         else:
-            self.fig.update_yaxes(range=[ylim_lower, ylim_upper * 1.01],
+            self.fig.update_yaxes(range=[ylim_lower, ylim_upper],
                                   **self.subplot_row_col)
 
     def show(self):
@@ -1591,17 +1682,25 @@ edgecolors : color or sequence of color, optional, default: 'face'
     def grid(self, b, which=None, axis='both'):
         if b:
             if axis == 'x':
-                self.fig.update_xaxes(showgrid=True)
-                self.fig.update_yaxes(showgrid=False)
+                self.fig.update_xaxes(showgrid=True,
+                                  **self.subplot_row_col)
+                self.fig.update_yaxes(showgrid=False,
+                                  **self.subplot_row_col)
             elif axis == 'y':
-                self.fig.update_xaxes(showgrid=False)
-                self.fig.update_yaxes(showgrid=True)
+                self.fig.update_xaxes(showgrid=False,
+                                  **self.subplot_row_col)
+                self.fig.update_yaxes(showgrid=True,
+                                  **self.subplot_row_col)
             elif axis == 'both':
-                self.fig.update_xaxes(showgrid=True)
-                self.fig.update_yaxes(showgrid=True)
+                self.fig.update_xaxes(showgrid=True,
+                                  **self.subplot_row_col)
+                self.fig.update_yaxes(showgrid=True,
+                                  **self.subplot_row_col)
         else:
-            self.fig.update_xaxes(showgrid=False)
-            self.fig.update_yaxes(showgrid=False)
+            self.fig.update_xaxes(showgrid=False,
+                                  **self.subplot_row_col)
+            self.fig.update_yaxes(showgrid=False,
+                                  **self.subplot_row_col)
 
 
     def _extract_font_properties(self, **kwargs):
@@ -1660,7 +1759,6 @@ edgecolors : color or sequence of color, optional, default: 'face'
         alpha = 1
         if color in mcolors.BASE_COLORS:
             color = self.base_color_dict[color]
-            None
         elif color in mcolors.TABLEAU_COLORS:
             None
         elif color in mcolors.CSS4_COLORS:
@@ -1703,6 +1801,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
         return self._rgb_to_rgba_tuple(rgb_tuple, alpha)
 
     def _rgb_tuple_to_str(self, rgb_tuple):
+        rgb_tuple = tuple(rgb_tuple)
         return f"rgba{rgb_tuple}"
 
     def _update_alpha_in_rgb_str(self, rgb_str, alpha):
@@ -1723,10 +1822,12 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
 
     def _convert_color_to_rgba_str(self, color, alpha):
+        print(color)
         if type(color) == str:
             if color[:3] != 'rgb':
                 # string defined color
                 if alpha is not None:
+                    print(color)
                     #alpha specified
                     color_rgba_tuple = self._named_color_to_rgba_tuple(color, alpha)
                     color_rgba = self._rgb_tuple_to_str(color_rgba_tuple)
@@ -1740,6 +1841,11 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 # given rgb or rgba with alpha given as keyword argument
                 if alpha is not None:
                     color_rgba = self._update_alpha_in_rgb_str(color, alpha)
+            else:
+                if alpha is not None:
+                    color_rgba = self._update_alpha_in_rgb_str(color, alpha)
+                else:
+                    color_rgba = self._update_alpha_in_rgb_str(color, 1)
         elif (type(color) == tuple) | (type(color) == list):
             color = tuple(color)
             # tuple provided
@@ -1878,7 +1984,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self.markers = {'line': {}}
         self.markers['symbol'] = rcParams.get('lines.marker', self.marker_dict['.'])
         self.markers['color'] = rcParams.get('lines.markerfacecolor', 'steelblue')
-        self.markers['size'] = float(rcParams.get('lines.markersize', 10))
+        self.markers['size'] = float(rcParams.get('lines.markersize', 5))
         self.markers['line']['color'] = rcParams.get('lines.markeredgecolor', 'steelblue')
         self.markers['line']['width'] = float(rcParams.get('lines.markeredgewidth', 1.5))
 
