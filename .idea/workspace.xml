@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6aa4e0da-2a85-42ac-8af7-cb7ae8b604a2" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/matplotlib.mplstyle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mattsplotlib.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mattsplotlib_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mattsplotlib_class.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -16,11 +18,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="109">
-              <caret line="12" column="22" selection-start-line="12" selection-start-column="22" selection-end-line="12" selection-end-column="22" />
-              <folding>
-                <element signature="e#0#33#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="198">
+              <caret line="9" column="30" selection-start-line="9" selection-start-column="30" selection-end-line="9" selection-end-column="30" />
             </state>
           </provider>
         </entry>
@@ -28,8 +27,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="249">
-              <caret line="898" column="78" selection-start-line="898" selection-start-column="78" selection-end-line="898" selection-end-column="78" />
+            <state relative-caret-position="481">
+              <caret line="83" column="39" selection-start-line="83" selection-start-column="39" selection-end-line="83" selection-end-column="39" />
               <folding>
                 <element signature="e#0#33#0" expanded="true" />
               </folding>
@@ -38,10 +37,19 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/matplotlib.mplstyle">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="353">
+              <caret line="642" column="25" selection-start-line="642" selection-start-column="25" selection-end-line="642" selection-end-column="25" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/style.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="66">
-              <caret line="3" column="22" selection-start-line="3" selection-start-column="4" selection-end-line="3" selection-end-column="22" />
+            <state relative-caret-position="132">
+              <caret line="6" column="17" selection-start-line="6" selection-start-column="17" selection-end-line="6" selection-end-column="17" />
             </state>
           </provider>
         </entry>
@@ -50,7 +58,7 @@
         <entry file="file://$PROJECT_DIR$/src/mattsplotlib.mplstyle">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="154">
-              <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
+              <caret line="7" selection-start-line="7" selection-end-line="7" />
             </state>
           </provider>
         </entry>
@@ -66,16 +74,9 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>text</find>
-      <find>text(</find>
-      <find>&lt;/br</find>
-      <find>_extract_font_properties</find>
-      <find>set_title</find>
-      <find>def grid</find>
       <find>def _parse_hovertext</find>
       <find>sharedy</find>
       <find>self.color_iterable</find>
-      <find>def bar</find>
       <find>def _get_plot_defaults</find>
       <find>_get_plot_defaults(</find>
       <find>matplotlibify_the_color</find>
@@ -96,6 +97,13 @@
       <find>_get_plot_styles</find>
       <find>_convert_color_to_rgba_str</find>
       <find>rcParams</find>
+      <find>print</find>
+      <find>def plot</find>
+      <find>def bar</find>
+      <find>_read_in_rcParams</find>
+      <find>float(rcParams.get('savefig.dpi', 300))</find>
+      <find>savefig.dpi</find>
+      <find>def _</find>
     </findStrings>
     <replaceStrings>
       <replace>self.layout['yaxis']['tickfont']['size']</replace>
@@ -112,16 +120,17 @@
         <option value="$PROJECT_DIR$/src/style.py" />
         <option value="$PROJECT_DIR$/src/networkx.py" />
         <option value="$PROJECT_DIR$/src/mattsplotlib_networkx.py" />
-        <option value="$PROJECT_DIR$/src/mattsplotlib.py" />
         <option value="$PROJECT_DIR$/src/mattsplotlib.mplstyle" />
+        <option value="$PROJECT_DIR$/src/mattsplotlib.py" />
+        <option value="$PROJECT_DIR$/src/matplotlib.mplstyle" />
         <option value="$PROJECT_DIR$/src/mattsplotlib_class.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" fullScreen="true">
+  <component name="ProjectFrameBounds" extendedState="1">
     <option name="y" value="23" />
     <option name="width" value="1680" />
-    <option name="height" value="948" />
+    <option name="height" value="967" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -177,7 +186,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="42" width="1680" height="967" extended-state="0" />
+    <frame x="0" y="23" width="1680" height="967" extended-state="1" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24954791" />
@@ -213,32 +222,36 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mattsplotlib.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="109">
-          <caret line="12" column="22" selection-start-line="12" selection-start-column="22" selection-end-line="12" selection-end-column="22" />
-          <folding>
-            <element signature="e#0#33#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/style.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="66">
-          <caret line="3" column="22" selection-start-line="3" selection-start-column="4" selection-end-line="3" selection-end-column="22" />
+        <state relative-caret-position="198">
+          <caret line="9" column="30" selection-start-line="9" selection-start-column="30" selection-end-line="9" selection-end-column="30" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mattsplotlib.mplstyle">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="154">
-          <caret line="7" lean-forward="true" selection-start-line="7" selection-end-line="7" />
+          <caret line="7" selection-start-line="7" selection-end-line="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/style.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="132">
+          <caret line="6" column="17" selection-start-line="6" selection-start-column="17" selection-end-line="6" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/matplotlib.mplstyle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="353">
+          <caret line="642" column="25" selection-start-line="642" selection-start-column="25" selection-end-line="642" selection-end-column="25" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mattsplotlib_class.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="249">
-          <caret line="898" column="78" selection-start-line="898" selection-start-column="78" selection-end-line="898" selection-end-column="78" />
+        <state relative-caret-position="481">
+          <caret line="83" column="39" selection-start-line="83" selection-start-column="39" selection-end-line="83" selection-end-column="39" />
           <folding>
             <element signature="e#0#33#0" expanded="true" />
           </folding>

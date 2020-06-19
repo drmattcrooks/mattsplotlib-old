@@ -14,7 +14,9 @@ from plotly.subplots import make_subplots
 
 
 class mattsplotlib():
+
     def __init__(self, **kwargs):
+
         self.marker_dict = {'.': 'circle',
                             ',': 'circle',
                             'o': 'circle',
@@ -61,7 +63,7 @@ class mattsplotlib():
 
         self.annotations = None
 
-        self.default_style_sheet = '/Users/crookm12/Documents/GitHubPersonal/mattsplotlib/src/mattsplotlib.mplstyle'
+        self.default_style_sheet = kwargs.get('style_sheet', '/Users/crookm12/Documents/GitHubPersonal/mattsplotlib/src/mattsplotlib.mplstyle')
 
         self.spines = {}
         for spine in ['top', 'left', 'bottom', 'right']:
@@ -78,8 +80,11 @@ class mattsplotlib():
             self.style_use(self.default_style_sheet)
 
             figsize = kwargs.get('figsize', self.figsize)
-            layout = {'width': figsize[0] * 500 / 7,
-                      'height': figsize[1] * 500 / 7}
+            if figsize is None:
+                layout = {'autosize': True}
+            else:
+                layout = {'width': figsize[0] * 500 / 7,
+                          'height': figsize[1] * 500 / 7}
             self.fig.update_layout(layout)
             self.subplot_layout = kwargs['subplot_layout']
 
@@ -850,11 +855,6 @@ edgecolors : color or sequence of color, optional, default: 'face'
             x = kwargs.get('x')
             y = kwargs.get('y')
 
-            if type(x) == range:
-                x = list(x)
-            if type(y) == range:
-                y = list(y)
-
             plot_trace = self._get_plot_defaults()
             plot_trace.update(x=x,
                               y=y,
@@ -889,7 +889,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
             if 'color' not in plot_style_dict['line']:
 
                 default_color = self._get_default_plot_color()
-                default_color = self._convert_color_to_rgba_str(kwargs.get('color'), kwargs.get('alpha'))
+                default_color = self._convert_color_to_rgba_str(default_color, kwargs.get('alpha', 1))
 
                 plot_style_dict['line']['color'] = default_color
                 plot_style_dict['marker']['color'] = default_color
@@ -912,8 +912,6 @@ edgecolors : color or sequence of color, optional, default: 'face'
             plot_style_dict['marker']['color'] = kwargs['markerfacecolor']
 
         return plot_style_dict
-
-
 
     def plot(self,
              *args,
@@ -1006,15 +1004,15 @@ edgecolors : color or sequence of color, optional, default: 'face'
                 range, 
                 array, 
                 tuple""")
-            kwargs['y'] = args[0]
-            kwargs['x'] = range(len(kwargs['y']))
+            kwargs['y'] = list(args[0])
+            kwargs['x'] = list(range(len(kwargs['y'])))
 
             plot_style_dict = self._get_plot_styles(None, **kwargs)
             self._plot(plot_style_dict=plot_style_dict, **kwargs)
 
         elif (len(args) == 2) & (type(args[1]) != str):
-            kwargs['x'] = args[0]
-            kwargs['y'] = args[1]
+            kwargs['x'] = list(args[0])
+            kwargs['y'] = list(args[1])
             plot_style_dict = self._get_plot_styles(None, **kwargs)
             self._plot(plot_style_dict=plot_style_dict, **kwargs)
 
@@ -1022,8 +1020,8 @@ edgecolors : color or sequence of color, optional, default: 'face'
             if type(args[1]) == str:
                 args = (range(len(args[0])), args[0], args[1])
 
-            kwargs['x'] = args[0]
-            kwargs['y'] = args[1]
+            kwargs['x'] = list(args[0])
+            kwargs['y'] = list(args[1])
 
             try:
                 color = self.matplotlibify_the_color(args[2])
@@ -1822,12 +1820,11 @@ edgecolors : color or sequence of color, optional, default: 'face'
 
 
     def _convert_color_to_rgba_str(self, color, alpha):
-        print(color)
+
         if type(color) == str:
             if color[:3] != 'rgb':
                 # string defined color
                 if alpha is not None:
-                    print(color)
                     #alpha specified
                     color_rgba_tuple = self._named_color_to_rgba_tuple(color, alpha)
                     color_rgba = self._rgb_tuple_to_str(color_rgba_tuple)
@@ -1953,10 +1950,13 @@ edgecolors : color or sequence of color, optional, default: 'face'
             for line in f:
                 line = line.strip()
                 if len(line) > 0:
-                    if (':' in line) & ('.' in line) & (line[0] != '#'):
+                    if (':' in line) & ('.' in line) & (line.strip()[0] != '#'):
                         try:
-                            rcpline = line.split(':')[: 2]
+                            rcpline = line.strip()
+                            rcpline = rcpline.split('#')[0]
+                            rcpline = rcpline.split(':')[: 2]
                             rcp[rcpline[0].strip()] = rcpline[1].strip()
+
                         except:
                             raise ValueError(f"unpassable rcParam line {line}")
 
@@ -2202,7 +2202,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self.rcParams_layout['xaxis']['gridwidth'] = float(rcParams.get('grid.linewidth', 0))
         self.rcParams_layout['yaxis']['gridwidth'] = float(rcParams.get('grid.linewidth', 0.8))
         # self.rcParams_layout['xaxis']['gridwidth'] = float(rcParams.get('grid.linewidth', 0.8))
-        if rcParams.get('grid.alpha', 1) < 0:
+        if float(rcParams.get('grid.alpha', 1)) < 0:
             self.rcParams_layout['xaxis']['gridcolor'] = self._add_alpha_value(
                 self.rcParams_layout['xaxis']['gridcolor'], rcParams.get('grid.alpha'))
 
@@ -2246,7 +2246,10 @@ edgecolors : color or sequence of color, optional, default: 'face'
         ## savefig
         self.rcParams_savefig = {}
         self.rcParams_savefig['transparent'] = eval(rcParams.get('savefig.transparent', True))
-        self.rcParams_savefig['dpi'] = float(rcParams.get('savefig.dpi', 300))
+        if rcParams.get('savefig.dpi') == 'figure':
+            self.rcParams_savefig['dpi'] = 200
+        else:
+            self.rcParams_savefig['dpi'] = rcParams.get('savefig.dpi', 300)
 
     def _get_plot_defaults(self):
         return go.Scatter(marker=self.markers, line=self.lines)

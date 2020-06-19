@@ -1,3 +1,11 @@
+#
+#    __   ___
+#   /  |_/  / _   /_  /_ __  __ /  __ /_  /  * /__
+#  / /|_// / __| /   /  /_  / //  / //   /  / /  /
+# /_/   /_/ /_///__ /__ __//_//_ /_//__ /_ / /__/
+#                         /
+#
+
 import plotly.graph_objects as go
 from mattsplotlib_class import mattsplotlib, figure_handle
 from plotly.subplots import make_subplots
@@ -5,6 +13,8 @@ import numpy as np
 import style
 
 global _figure, _new_fig, _stylesheet
+
+
 _new_fig = True
 _stylesheet = 'empty_stylesheet.py'
 
