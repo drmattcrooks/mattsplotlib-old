@@ -355,9 +355,15 @@ class mattsplotlib():
                     visible=False,
                     range=zrange)))
 
+    def barh(self, *args, **kwargs):
+        kwargs['orientation'] = 'h'
+        self.bar(*args, **kwargs)
+
     def bar(self,
             *args,
             **kwargs):
+
+        kwargs.setdefault('orientation', 'v')
 
         if len(args) == 0:
             raise TypeError("bar() missing 2 required positional arguments: 'x' and 'height'")
@@ -491,7 +497,8 @@ bar_mode : stacked
                                  'line': {'color': kwargs['edgecolor'],
                                           'width': kwargs['linewidth']}},
                          width=kwargs['width'],
-                         offset=kwargs['offset'])
+                         offset=kwargs['offset'],
+                         orientation=kwargs['orientation'])
 
         if 'fig' not in dir(self):
             self.figure()
