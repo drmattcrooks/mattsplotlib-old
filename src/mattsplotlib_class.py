@@ -43,6 +43,8 @@ class mattsplotlib():
                             '|': 'line-ns',
                             '_': 'line-ew'}
 
+        self.line_style_dict = {'--': 'dash',
+                                '-': None}
 
         self.base_color_dict = {'b': 'blue',
                                 'g': 'green',
@@ -356,6 +358,13 @@ class mattsplotlib():
                     range=zrange)))
 
     def barh(self, *args, **kwargs):
+        """
+        horizontal bar plot.
+        Addeds orientation = 'h' to function call of bar. Can also be achieved by directly passing orientation='h' into bar()
+        :param args: positional arguments to pass to bar()
+        :param kwargs: keyword arguments to pass to bar()
+        :return: horizontal bar plot
+        """
         kwargs['orientation'] = 'h'
         self.bar(*args, **kwargs)
 
@@ -370,13 +379,29 @@ class mattsplotlib():
         elif len(args) == 1:
             raise TypeError("bar() missing 1 required positional argument: 'height'")
         elif len(args) == 2:
-            x = list(args[0])
-            height = list(args[1])
+            if type(args[0]) in [int, float]:
+                x = [args[0]]
+            else:
+                x = list(args[0])
+            if type(args[1]) in [int, float]:
+                height = [args[1]]
+            else:
+                height = list(args[1])
             kwargs.setdefault('width', 0.8)
+
         elif len(args) == 3:
-            x = args[0]
-            height = args[1]
-            width = args[2]
+            if type(args[0]) in [int, float]:
+                x = [args[0]]
+            else:
+                x = list(args[0])
+            if type(args[1]) in [int, float]:
+                height = [args[1]]
+            else:
+                height = list(args[1])
+            if type(args[2]) in [int, float]:
+                width = [args[2]]
+            else:
+                width = list(args[2])
             if type(width) in (list, np.ndarray):
                 if len(width) == 1:
                     width = width[0]
@@ -1150,14 +1175,13 @@ edgecolors : color or sequence of color, optional, default: 'face'
                if 'c' in kwargs:
                    warnings.warn("Saw kwargs ['c', 'color'] which are all aliases for 'color'.  Kept value from 'color')")
                color = kwargs['color']
+               kwargs.pop('color')
             elif 'c' in kwargs:
                 color = kwargs['c']
             elif len(args) == 3:
                 color = args[2]
             else:
                 color = self._get_default_plot_color()
-
-            kwargs.pop('color')
 
             if len(args) == 0:
                 None
@@ -1244,6 +1268,7 @@ edgecolors : color or sequence of color, optional, default: 'face'
         self.plot_types.append('fill')
 
         hovertext = kwargs.get('hovertext')
+
         if hovertext is not None:
             hoverinfo = 'text'
         else:
@@ -1260,11 +1285,30 @@ edgecolors : color or sequence of color, optional, default: 'face'
                      'fillcolor': color,
                      'hoverinfo': hoverinfo,
                      'hovertext': hovertext,
+                     'hoveron': 'fills',
                      'line_width': 0,
-                     'opacity': alpha}
-        layout = {'showlegend': showlegend}
+                     'opacity': alpha,
+                     'showlegend': showlegend}
+
+        if showlegend & ('name' in kwargs):
+            fill_data['name'] = kwargs.get('name')
+
+        if (hovertext is not None) & ('name' not in kwargs):
+            fill_data['name'] = kwargs.get('hovertext')
+
+        if (hovertext is not None) & ('name' in kwargs):
+            warnings.warn("Both 'name' and 'hovertext' given - defaulting to hovertext. \n"
+                          "Plotly fill does not support hovertext. The workaround in Mattplotlib is "
+                          "to assign the hovertext provided to the attribute name to provide a name "
+                          "label at the side of the filled region. This name label is what will appear "
+                          "in the legend so it is advised to not show the filled region in the legend. "
+                          "This can be achieved by either not assigning a value to the keyword argument "
+                          "showlegend or to explicitly set this to False on calling fill.\n"
+                          "eg ax.fill(*args, showlegend=False)")
+            fill_data['name'] = kwargs.get('hovertext')
+
         self.fig.add_trace(fill_data)
-        self.fig.update_layout(layout)
+        # self.fig.update_layout(layout)
 
         #
         # if fill_type == 'list+list+str_':
