@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
 from plotly.validators.scatter.marker import SymbolValidator
 import numpy as np
 import warnings
@@ -55,7 +56,7 @@ class mattsplotlib():
                                 'k': 'black',
                                 'w': 'white'}
 
-        self.color_iterable = ['steelblue', 'sandybrown', 'forestgreen', 'firebrick']#'[self._rgb_tuple_to_str(self.matplotlibify_the_color(c)) for c in list(mcolors.TABLEAU_COLORS.keys())]
+        self.color_iterable = ['steelblue', 'sandybrown', 'forestgreen', 'firebrick'] * 100#'[self._rgb_tuple_to_str(self.matplotlibify_the_color(c)) for c in list(mcolors.TABLEAU_COLORS.keys())]
 
         self.default_color = 'steelblue'
 
@@ -357,6 +358,20 @@ class mattsplotlib():
                     visible=False,
                     range=zrange)))
 
+    def hist(self, *args, **kwargs):
+        hist_data = plt.hist(*args, **kwargs)
+        yh = hist_data[0]
+        xh = hist_data[1]
+        bar_centers = 0.5 * (xh[1:] + xh[:-1])
+        bar_widths = xh[1:] - xh[:-1]
+
+        if kwargs.get('orientation', 'v')[0] == 'v':
+            self.bar(bar_centers, yh, bar_widths)
+        elif kwargs.get('orientation', 'v')[0] == 'h':
+            self.barh(yh, bar_centers, bar_widths)
+        else:
+            raise ValueError(f"orientation kwarg {kwargs['orientation']} is not recognized")
+
     def barh(self, *args, **kwargs):
         """
         horizontal bar plot.
@@ -421,12 +436,19 @@ class mattsplotlib():
         kwargs.setdefault('hovertext', None)
         kwargs.setdefault('hoverinfo', 'text')
         if kwargs.get('align', 'center') == 'center':
-            kwargs['width'] = abs(kwargs['width'])
-            kwargs.setdefault('offset', - 0.5 * kwargs['width'])
+            if type(kwargs['width']) in (int, float):
+                kwargs['width'] = abs(kwargs['width'])
+                kwargs.setdefault('offset', - 0.5 * kwargs['width'])
+            else:
+                kwargs['width'] = [abs(w) for w in kwargs['width']]
+                kwargs.setdefault('offset', [-0.5 * w for w in kwargs['width']])
         elif kwargs.get('align', 'center') == 'edge':
             if kwargs['width'] < 0:
                 kwargs.setdefault('offset', kwargs['width'])
-                kwargs['width'] = abs(kwargs['width'])
+                if type(kwargs['width']) in (int, float):
+                    kwargs['width'] = abs(kwargs['width'])
+                else:
+                    kwargs['width'] = [abs(w) for w in kwargs['width']]
             else:
                 kwargs.setdefault('offset', 0)
         else:
@@ -437,6 +459,7 @@ class mattsplotlib():
         self._bar(x=x, y=height, **kwargs)
 
     def _bar(self, x, y, **kwargs):
+
         """
         Create a bar chart using matplotlib syntax
 
@@ -497,7 +520,7 @@ bar_mode : stacked
 
         self.plot_types.append('bar')
 
-        if kwargs['log']:
+        if 'log' in kwargs:
             yaxis_type = 'log'
         else:
             yaxis_type = 'linear'
@@ -507,9 +530,9 @@ bar_mode : stacked
         if 'yerr' in kwargs:
             warnings.warn('yerr specified - this feature is not support yet and the argument will be ignored')
 
-        # perturb x so that multiple bars at the same x location don't get offset
-        eps = 1e-3
-        eps_rand = np.random.uniform(1 - 2 * eps, 1 - eps)
+        # # perturb x so that multiple bars at the same x location don't get offset
+        # eps = 1e-3
+        # eps_rand = np.random.uniform(1 - 2 * eps, 1 - eps)
 
         bar_trace = self._get_bar_defaults()
         bar_trace.update(x=x,
