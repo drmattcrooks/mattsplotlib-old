@@ -38,3 +38,52 @@ f, ax = mplt.subplots()
 ax.plot(x, y)
 f.show()
 ```
+Here f in a Plotly figure object. If I haven't added a particular feature into mattsplotlib yet then you can modify f using standard Plotly syntax. ax is based on matplotlib syntax and contains all the functions for modifying the figure f. The figure f can also be extracted using `ax.fig`. If you print out f.data and f.layout then you can copy the raw plotly code into your own code
+```
+import plotly.graph_objects as go
+go.Figure(data=<f.data>, layout=<f.layout>)
+```
+By `<f.data>` I mean copy the json format output of f.data. The advantage of this is it will automatically set up all your style sheet defaults for you. 
+
+## Supported plot styles
+plot
+bar
+barh
+hist
+scatter
+bubble (scatter plot with bigger bubbles like a standard plotly scatter plot)
+fill
+
+## hovertext
+All of the above take an additional keyword argument `hovertext`. Setting this to a string will result in that string appearing everytime you hover over that plotting element. Setting it to a list of strings will pass each of the strings to its corresponding plot point.
+
+The following would display the text `The identity line` over the line `y=x`.
+```
+f, ax = mplt.subplots()
+x = np.linspace(0, 1)
+ax.plot(x, x, hovertext='The identity line')
+f.show()
+```
+The following would display the x coordinates of each point on the line
+```
+f, ax = mplt.subplots()
+x = np.linspace(0, 1)
+ax.plot(x, x, hovertext=[f"x coordinate: {xi}" for xi in x])
+f.show()
+```
+The following would display the x AND y coordinates of each point on the line
+```
+f, ax = mplt.subplots()
+x = np.linspace(0, 1)
+ax.plot(x, x, hovertext=[f"<b>x coordinate:</b> {xi}</br><b>y coordinate:</br> {xi}" for xi in x])
+f.show()
+```
+notice the <b> and <br> html formats here that set bold text and line breaks.
+
+# import
+
+Clone this repo and then add it to your .bash_profile
+```
+export PYTHONPATH=path_to_src_folder:$PYTHONPATH
+```
+You can then import using `import mattsplotlib as mplt`
