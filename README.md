@@ -1,4 +1,4 @@
-# mattsplotlib
+### mattsplotlib
 matplotlib syntax for plotly
 
 Despite what people think, matplotlib is great! If you think Seaborn is the doggy's doo-das; you do realise that's matplotlib, right?? 
@@ -78,7 +78,7 @@ x = np.linspace(0, 1)
 ax.plot(x, x, hovertext=[f"<b>x coordinate:</b> {xi}</br><b>y coordinate:</br> {xi}" for xi in x])
 f.show()
 ```
-notice the <b> and <br> html formats here that set bold text and line breaks.
+notice the `<b>` and `<br>` html formats here that set bold text and line breaks.
 
 # import
 
