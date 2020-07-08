@@ -359,6 +359,11 @@ class mattsplotlib():
                     range=zrange)))
 
     def hist(self, *args, **kwargs):
+
+        mattplotlib_kwargs = {}
+        for kw in set(kwargs.keys()).intersection(set(['bins', 'range', 'density', 'cumulative', 'align', 'orientation', 'normed'])):
+            mattplotlib_kwargs[kw] = kwargs[kw]
+
         hist_data = plt.hist(*args, **kwargs)
         yh = hist_data[0]
         xh = hist_data[1]
@@ -366,9 +371,9 @@ class mattsplotlib():
         bar_widths = xh[1:] - xh[:-1]
 
         if kwargs.get('orientation', 'v')[0] == 'v':
-            self.bar(bar_centers, yh, bar_widths)
+            self.bar(bar_centers, yh, bar_widths, **kwargs)
         elif kwargs.get('orientation', 'v')[0] == 'h':
-            self.barh(yh, bar_centers, bar_widths)
+            self.barh(yh, bar_centers, bar_widths, **kwargs)
         else:
             raise ValueError(f"orientation kwarg {kwargs['orientation']} is not recognized")
 
@@ -533,6 +538,7 @@ bar_mode : stacked
         # # perturb x so that multiple bars at the same x location don't get offset
         # eps = 1e-3
         # eps_rand = np.random.uniform(1 - 2 * eps, 1 - eps)
+
 
         bar_trace = self._get_bar_defaults()
         bar_trace.update(x=x,
@@ -1330,7 +1336,8 @@ edgecolors : color or sequence of color, optional, default: 'face'
                           "eg ax.fill(*args, showlegend=False)")
             fill_data['name'] = kwargs.get('hovertext')
 
-        self.fig.add_trace(fill_data)
+        self.fig.add_trace(fill_data,
+                **self.subplot_row_col)
         # self.fig.update_layout(layout)
 
         #
