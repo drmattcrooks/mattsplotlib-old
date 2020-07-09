@@ -365,6 +365,7 @@ class mattsplotlib():
             mattplotlib_kwargs[kw] = kwargs[kw]
 
         hist_data = plt.hist(*args, **kwargs)
+        plt.close()
         yh = hist_data[0]
         xh = hist_data[1]
         bar_centers = 0.5 * (xh[1:] + xh[:-1])
